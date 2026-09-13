@@ -47,9 +47,9 @@ runuser -u "$USER_NAME" gsettings set org.gnome.desktop.interface icon-theme 'Fl
 systemctl enable --now bluetooth
 
 # waybar: repo is source of truth
-install -d "$HOME_DIR/.config/waybar/scripts" "$HOME_DIR/.config/mako" "$HOME_DIR/appearance/waybar" "$HOME_DIR/.config/setup_linux" "$HOME_DIR/.cache/waybar"
-install -m 600 "$REPO/globals.sh" "$HOME_DIR/.config/setup_linux/globals.sh"
-chown "$USER_NAME:$USER_NAME" "$HOME_DIR/.config/setup_linux/globals.sh"
+install -d "$HOME_DIR/.config/waybar/scripts" "$HOME_DIR/.config/mako" "$HOME_DIR/appearance/waybar" "$HOME_DIR/.config/arch-install" "$HOME_DIR/.cache/waybar"
+install -m 600 "$REPO/globals.sh" "$HOME_DIR/.config/arch-install/globals.sh"
+chown "$USER_NAME:$USER_NAME" "$HOME_DIR/.config/arch-install/globals.sh"
 cp -a "$REPO/waybar/." "$HOME_DIR/.config/waybar/"
 cp -a "$REPO/waybar/." "$HOME_DIR/appearance/waybar/"
 sudo cp -a "$REPO/waybar/." /etc/xdg/waybar

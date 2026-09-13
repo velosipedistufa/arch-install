@@ -1,4 +1,4 @@
-# setup_linux
+# arch-install
 
 Arch (and a bit of Debian) install + dwl/Waybar session.
 
@@ -22,9 +22,9 @@ $EDITOR globals.sh
 
 RAM (DDR3/4/5) and VRAM (GDDR…) are **not** in globals — probed from the machine, cached, and refreshed if the board or GPU changes.
 
-Install scripts `source` this file. Waybar Python modules parse the same file (repo `globals.sh` or `~/.config/setup_linux/globals.sh` after `setup.sh`).
+Install scripts `source` this file. Waybar Python modules parse the same file (repo `globals.sh` or `~/.config/arch-install/globals.sh` after `setup.sh`).
 
-Override path: `SETUP_LINUX_GLOBALS=/path/to/globals.sh`.
+Override path: `ARCH_INSTALL_GLOBALS=/path/to/globals.sh`.
 
 ## Layout
 

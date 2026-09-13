@@ -37,9 +37,10 @@ SKIP_IFACE_PREFIXES = (
 
 def _global_paths() -> list[Path]:
     paths: list[Path] = []
-    env = os.environ.get("SETUP_LINUX_GLOBALS")
+    env = os.environ.get("ARCH_INSTALL_GLOBALS") or os.environ.get("SETUP_LINUX_GLOBALS")
     if env:
         paths.append(Path(env))
+    paths.append(Path.home() / ".config" / "arch-install" / "globals.sh")
     paths.append(Path.home() / ".config" / "setup_linux" / "globals.sh")
     # waybar/scripts/lib.py -> repo root
     paths.append(Path(__file__).resolve().parents[2] / "globals.sh")

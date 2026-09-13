@@ -17,7 +17,8 @@ export SDL_VIDEODRIVER=wayland
 export ELECTRON_OZONE_PLATFORM_HINT=wayland
 export _JAVA_AWT_WM_NONREPARENTING=1
 
-G="${HOME}/.config/setup_linux/globals.sh"
+G="${HOME}/.config/arch-install/globals.sh"
+[ -f "$G" ] || G="${HOME}/.config/setup_linux/globals.sh"
 [ -f "$G" ] && . "$G"
 
 mkdir -p "${HOME}/.cache"

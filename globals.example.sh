@@ -2,7 +2,7 @@
 #   cp globals.example.sh globals.sh
 #
 # Install scripts:  . ./globals.sh
-# Waybar: reads the same file (or ~/.config/setup_linux/globals.sh after setup.sh).
+# Waybar: reads the same file (or ~/.config/arch-install/globals.sh after setup.sh).
 
 # Login user created by archinstall2.sh / used by setup.sh
 USER_NAME=youruser
