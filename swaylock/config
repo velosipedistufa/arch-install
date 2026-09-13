@@ -1,0 +1,21 @@
+color=0b0c10
+inside-color=0b0c10ff
+inside-clear-color=0b0c10ff
+inside-ver-color=0b0c10ff
+inside-wrong-color=0b0c10ff
+ring-color=00f0ffff
+ring-clear-color=fcee0aff
+ring-ver-color=3dffb0ff
+ring-wrong-color=ff2a4aff
+key-hl-color=fcee0aff
+bs-hl-color=ff6a00ff
+line-color=00000000
+text-color=e8ecf4ff
+text-clear-color=e8ecf4ff
+text-ver-color=e8ecf4ff
+text-wrong-color=ff2a4aff
+separator-color=00000000
+font=AtkynsonMono Nerd Font
+daemonize
+ignore-empty-password
+show-failed-attempts

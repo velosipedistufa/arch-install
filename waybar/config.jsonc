@@ -44,7 +44,7 @@
     "custom/session": {
         "format": "⏻",
         "tooltip": true,
-        "tooltip-format": "logout / suspend",
+        "tooltip-format": "lock / suspend / exit to ly",
         "on-click": "$HOME/.config/waybar/scripts/session.sh"
     },
     "tray": {

@@ -153,7 +153,6 @@ static const Key keys[] = {
 	{ MODKEY,                    XKB_KEY_y,		togglefloating,  {0} },
 	{ MODKEY,                    XKB_KEY_e,         togglefullscreen, {0} },
 	{ MODKEY,                    XKB_KEY_0,          view,           {.ui = ~0} },
-	{ MODKEY,		     XKB_KEY_y,		
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_parenright, tag,            {.ui = ~0} },
 	{ MODKEY,                    XKB_KEY_comma,      focusmon,       {.i = WLR_DIRECTION_LEFT} },
 	{ MODKEY,                    XKB_KEY_period,     focusmon,       {.i = WLR_DIRECTION_RIGHT} },
@@ -174,6 +173,12 @@ static const Key keys[] = {
 	{ WLR_MODIFIER_CTRL|WLR_MODIFIER_ALT,XKB_KEY_Terminate_Server, quit, {0} },
 	//{ 0, 107, spawn, SHCMD("grim ~/Pictures/screenshot_$(date +%Y%m%d_%H%M%S).png") },
 	{ 0, XKB_KEY_Print, spawn, 						{.v = PrtSc} },
+	{ 0, XKB_KEY_XF86AudioRaiseVolume,  spawn, SHCMD("wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+") },
+	{ 0, XKB_KEY_XF86AudioLowerVolume,  spawn, SHCMD("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-") },
+	{ 0, XKB_KEY_XF86AudioMute,         spawn, SHCMD("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle") },
+	{ 0, XKB_KEY_XF86AudioMicMute,      spawn, SHCMD("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle") },
+	{ 0, XKB_KEY_XF86MonBrightnessDown, spawn, SHCMD("$HOME/.config/waybar/scripts/brightness.sh down") },
+	{ 0, XKB_KEY_XF86MonBrightnessUp,   spawn, SHCMD("$HOME/.config/waybar/scripts/brightness.sh up") },
 	/* Ctrl-Alt-Fx is used to switch to another VT, if you don't know what a VT is
 	 * do not remove them.
 	 */

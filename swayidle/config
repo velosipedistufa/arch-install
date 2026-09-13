@@ -1,0 +1,8 @@
+# No timeouts yet (no auto lock / blank / suspend).
+# Uncomment later, e.g.:
+# timeout 300 'swaylock -f'
+# timeout 600 'brightnessctl -q set 0' resume 'brightnessctl -q set 30%'
+# timeout 900 'systemctl suspend'
+
+# Still lock before sleep so a manual suspend stays in this session.
+before-sleep swaylock -f

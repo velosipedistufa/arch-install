@@ -5,6 +5,7 @@ globals.sh
 forGrok.md
 PLAN_WAYBAR.md
 *.log
+wev.txt
 __pycache__/
 *.pyc
 
