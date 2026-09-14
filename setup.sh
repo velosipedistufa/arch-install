@@ -16,7 +16,7 @@ mkdir -p /usr/share/wayland-sessions
 #runuser -u "$USER_NAME" scp "${USER_NAME}@${HOME_SERVER}:/home/${USER_NAME}/apearance/archiv.7z" "$HOME_DIR/appearance"
 #runuser -u "$USER_NAME" 7z x archiv.7z
 sudo cp -a "$REPO/wayland-sessions/." /usr/share/wayland-sessions/
-pacman -Syu --noconfirm fuzzel ffmpeg swaybg swayimg waybar pipewire wireplumber wayland libinput pkg-config pipewire-jack git cmatrix btop htop go udiskie xdg-desktop-portal xdg-desktop-portal-wlr kitty yazi transmission mousepad playerctl bluez bluez-utils jq libxss mailcap libxt gnu-free-fonts lxappearance gtk4 pipewire-alsa pipewire-v4l2 sof-firmware alsa-ucm-conf grim slurp wl-clipboard swappy gvfs 7zip neovim hyfetch usbutils wget simple-scan docker blueman bluez bluez-utils android-tools dnsutils llvm gsettings-desktop-schemas udisks2 make python mako noto-fonts-emoji ttf-nerd-fonts-symbols swayidle swaylock brightnessctl
+pacman -Syu --noconfirm fuzzel ffmpeg swaybg swayimg waybar pipewire wireplumber wayland libinput pkg-config pipewire-jack git cmatrix btop htop go udiskie xdg-desktop-portal xdg-desktop-portal-wlr kitty yazi transmission mousepad playerctl bluez bluez-utils jq libxss mailcap libxt gnu-free-fonts lxappearance gtk4 pipewire-alsa pipewire-v4l2 sof-firmware alsa-ucm-conf grim slurp wl-clipboard swappy gvfs 7zip neovim hyfetch usbutils wget simple-scan docker blueman bluez bluez-utils android-tools dnsutils llvm gsettings-desktop-schemas udisks2 make python mako noto-fonts-emoji ttf-nerd-fonts-symbols swayidle swaylock brightnessctl waydroid
 #pipewire-alsa should be removed as far as firefox will implement pipewire support
 cd "$HOME_DIR"
 runuser -u "$USER_NAME" git clone https://aur.archlinux.org/paru.git
