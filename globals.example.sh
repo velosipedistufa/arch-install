@@ -36,3 +36,11 @@ KEYBOARD_UNIQ=
 
 # RAM type (DDR3/4/5) and VRAM type (GDDR5/…) are not set here.
 # Detected from DMI / amdgpu on first run and whenever the board or GPU changes.
+
+# Screenshots (Print): grim+slurp region → clipboard, local dir, Nextcloud.
+# Use the public hostname (cloud.example.com), never a LAN IP, so a laptop
+# off-LAN still uploads. Per-machine folder: ScreenshotsDesktop vs ScreenshotsLaptop.
+SCREENSHOT_LOCAL_DIR=/tmp/screenshots
+SCREENSHOT_DAV_URL=https://cloud.example.com/remote.php/dav/files/youruser/Pictures/ScreenshotsDesktop
+SCREENSHOT_DAV_USER=youruser
+SCREENSHOT_DAV_PASSWORD=changeme

@@ -19,6 +19,7 @@ $EDITOR globals.sh
 | `HOME_SERVER` / `HOME_SERVER_LABEL` | Waybar home-host ping |
 | `VPS_HOST` / `VPS_A` / `VPS_AAAA` | Waybar VPS plate: DoH A/AAAA must match, then ping those IPs |
 | `KEYBOARD_EVENT` / `KEYBOARD_UNIQ` | layout-watch (display only) |
+| `SCREENSHOT_*` | Print: local dir + Nextcloud WebDAV URL/user/password (domain, not LAN IP) |
 
 RAM (DDR3/4/5) and VRAM (GDDR…) are **not** in globals — probed from the machine, cached, and refreshed if the board or GPU changes.
 
