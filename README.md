@@ -16,7 +16,8 @@ $EDITOR globals.sh
 | `USER_NAME` / `USER_PASSWORD` | `archinstall2.sh` user + password (placeholders in the example) |
 | `HOSTNAME` | `/etc/hostname` |
 | `DISK` | **You pick this.** Whole disk only (`/dev/nvme0n1`, `/dev/sda`, `/dev/vda`). The install script invents `p1`/`1` itself. |
-| `HOME_SERVER` / `HOME_SERVER_LABEL` | Waybar home-host ping |
+| `HOME_SERVER_IID` / `HOME_SERVER_LABEL` | Waybar plate `::6`: ping current ISP `/64` + `::IID` (prefix not stored) |
+| `HOME_SERVER` | Optional IPv4 for LAN ARP only |
 | `VPS_HOST` / `VPS_A` / `VPS_AAAA` | Waybar VPS plate: DoH A/AAAA must match, then ping those IPs |
 | `KEYBOARD_EVENT` / `KEYBOARD_UNIQ` | layout-watch (display only) |
 | `SCREENSHOT_*` | Print: local dir + Nextcloud WebDAV URL/user/password (domain, not LAN IP) |
@@ -32,5 +33,10 @@ Override path: `ARCH_INSTALL_GLOBALS=/path/to/globals.sh`.
 1. Live ISO: edit `globals.sh`, run `archinstall1.sh`, then in chroot `archinstall2.sh`.
 2. As root on the installed system: `setup.sh` (paru, dwl, Waybar, ly).
 3. Session: ly → `start-dwl.sh`.
+
+### Mihomo (program config only)
+
+See [`mihomo/README.md`](mihomo/README.md): TUN/DNS/systemd/TUI helpers **without** VLESS/proxy profiles.  
+Keep `inet6-address` under `tun:` or IPv6 bypasses the tunnel after reboot/TUI restart.
 
 Do not commit `globals.sh` or `forGrok.md`.

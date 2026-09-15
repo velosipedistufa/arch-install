@@ -16,9 +16,12 @@ HOSTNAME=arch
 #   /dev/vda      →  vda1 / vda2  (typical VM)
 DISK=/dev/sda
 
-# LAN host to ping on the bar (home server). Short label is the plate text.
+# Home server IPv6: this PC's current ISP /64 (dynamic, never stored) plus ::IID.
+# Plate text is HOME_SERVER_LABEL.
+HOME_SERVER_IID=6
+HOME_SERVER_LABEL=::6
+# Optional IPv4 for LAN ARP refresh only.
 HOME_SERVER=192.168.1.10
-HOME_SERVER_LABEL=home
 # Optional. Empty = derive x.y.z.255 from HOME_SERVER.
 LAN_BCAST=
 

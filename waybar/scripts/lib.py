@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import os
 import socket
@@ -221,6 +222,37 @@ def amdgpu_device() -> Path | None:
         if (card / "gpu_busy_percent").is_file():
             return card
     return None
+
+
+def global_v6_prefix64() -> ipaddress.IPv6Network | None:
+    """Current ISP /64 from a global address on a physical NIC (prefix is dynamic)."""
+    for name in physical_ifaces():
+        try:
+            proc = run(["ip", "-j", "-6", "addr", "show", "dev", name, "scope", "global"], timeout=2)
+            data = json.loads(proc.stdout) if proc.returncode == 0 and proc.stdout.strip() else []
+        except (json.JSONDecodeError, subprocess.TimeoutExpired):
+            continue
+        for link in data:
+            for a in link.get("addr_info") or []:
+                if a.get("family") != "inet6":
+                    continue
+                local = a.get("local")
+                if not local:
+                    continue
+                try:
+                    addr = ipaddress.IPv6Address(local)
+                except ValueError:
+                    continue
+                if addr.is_global:
+                    return ipaddress.IPv6Network(f"{addr}/64", strict=False)
+    return None
+
+
+def home_server_v6(iid: int = 6) -> str | None:
+    net = global_v6_prefix64()
+    if net is None:
+        return None
+    return str(net.network_address + iid)
 
 
 def physical_ifaces() -> list[str]:
