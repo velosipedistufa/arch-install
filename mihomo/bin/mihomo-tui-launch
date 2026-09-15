@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+# Launch mihomo-tui after ensuring required backends are up:
+#   - dual-stack TUN addresses on disk (inet6 often stripped by TUI/API)
+#   - mihomo core (user systemd unit, or fallback process)
+#   - REST API on 127.0.0.1:9093
+#   - GNOME/XDG system proxy pointed at mihomo mixed-port
+set -euo pipefail
+
+export PATH="${HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin:${PATH:-}"
+
+API_URL="${MIHOMO_API:-http://127.0.0.1:9093}"
+CONFIG_DIR="${MIHOMO_CONFIG_DIR:-$HOME/.config/mihomo}"
+CONFIG_FILE="${MIHOMO_CONFIG:-$CONFIG_DIR/config.yaml}"
+TUI_BIN="${MIHOMO_TUI_BIN:-}"
+if [[ -z "$TUI_BIN" ]]; then
+  if [[ -x "$HOME/.local/bin/mihomo-tui" ]]; then
+    TUI_BIN="$HOME/.local/bin/mihomo-tui"
+  elif [[ -x /usr/bin/mihomo-tui ]]; then
+    TUI_BIN=/usr/bin/mihomo-tui
+  else
+    TUI_BIN="$(command -v mihomo-tui || true)"
+  fi
+fi
+
+if [[ -z "${TUI_BIN}" || ! -x "${TUI_BIN}" ]]; then
+  echo "mihomo-tui-launch: mihomo-tui binary not found" >&2
+  exit 1
+fi
+
+export EDITOR="${EDITOR:-nvim}"
+export VISUAL="${VISUAL:-${EDITOR}}"
+
+api_up() {
+  curl -fsS --connect-timeout 0.3 --max-time 1 "${API_URL}/version" >/dev/null 2>&1
+}
+
+runtime_has_inet6() {
+  curl -fsS --connect-timeout 0.5 --max-time 2 "${API_URL}/configs" 2>/dev/null \
+    | python3 -c 'import sys,json; t=json.load(sys.stdin).get("tun") or {}; raise SystemExit(0 if t.get("inet6-address") else 1)' \
+    2>/dev/null
+}
+
+ensure_tun_ipv6_disk() {
+  if [[ -x "$HOME/.local/bin/mihomo-ensure-tun-ipv6" ]]; then
+    "$HOME/.local/bin/mihomo-ensure-tun-ipv6" >/dev/null || true
+  fi
+}
+
+force_reload_config() {
+  curl -fsS -X PUT "${API_URL}/configs?force=true" \
+    -H 'Content-Type: application/json' \
+    -d "{\"path\":\"${CONFIG_FILE}\"}" >/dev/null 2>&1 || true
+}
+
+start_mihomo() {
+  mkdir -p "${CONFIG_DIR}"
+  ensure_tun_ipv6_disk
+
+  if systemctl --user cat mihomo.service >/dev/null 2>&1; then
+    systemctl --user enable mihomo.service >/dev/null 2>&1 || true
+    systemctl --user start mihomo.service
+    return 0
+  fi
+
+  if ! pgrep -x mihomo >/dev/null 2>&1; then
+    local bin=""
+    if [[ -x /usr/bin/mihomo ]]; then
+      bin=/usr/bin/mihomo
+    elif [[ -x "$HOME/.local/bin/mihomo" ]]; then
+      bin="$HOME/.local/bin/mihomo"
+    else
+      bin="$(command -v mihomo || true)"
+    fi
+    if [[ -z "$bin" ]]; then
+      echo "mihomo-tui-launch: mihomo core not found" >&2
+      exit 1
+    fi
+    nohup "$bin" -d "${CONFIG_DIR}" >>"${CONFIG_DIR}/mihomo.log" 2>&1 &
+  fi
+}
+
+ensure_system_proxy() {
+  if [[ -x "$HOME/.local/bin/mihomo-system-proxy" ]]; then
+    "$HOME/.local/bin/mihomo-system-proxy" on >/dev/null 2>&1 || true
+    return 0
+  fi
+  if command -v gsettings >/dev/null 2>&1; then
+    gsettings set org.gnome.system.proxy mode 'manual' >/dev/null 2>&1 || true
+    gsettings set org.gnome.system.proxy.http host '127.0.0.1' >/dev/null 2>&1 || true
+    gsettings set org.gnome.system.proxy.http port 7890 >/dev/null 2>&1 || true
+    gsettings set org.gnome.system.proxy.http enabled true >/dev/null 2>&1 || true
+    gsettings set org.gnome.system.proxy.https host '127.0.0.1' >/dev/null 2>&1 || true
+    gsettings set org.gnome.system.proxy.https port 7890 >/dev/null 2>&1 || true
+    gsettings set org.gnome.system.proxy.socks host '127.0.0.1' >/dev/null 2>&1 || true
+    gsettings set org.gnome.system.proxy.socks port 7890 >/dev/null 2>&1 || true
+  fi
+}
+
+ensure_tun_ipv6_disk
+
+if ! api_up; then
+  start_mihomo
+  for _ in $(seq 1 50); do
+    api_up && break
+    sleep 0.2
+  done
+  if ! api_up; then
+    echo "mihomo-tui-launch: mihomo API not available at ${API_URL}" >&2
+    echo "Check: systemctl --user status mihomo" >&2
+    exit 1
+  fi
+fi
+
+# If core is up but IPv6 TUN was stripped (common after TUI Restart/PATCH), re-apply YAML.
+if ! runtime_has_inet6; then
+  ensure_tun_ipv6_disk
+  force_reload_config
+  sleep 0.3
+fi
+
+ensure_system_proxy
+
+exec "$TUI_BIN" "$@"

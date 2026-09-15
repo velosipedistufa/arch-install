@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Apply or clear GNOME/XDG system proxy settings for mihomo mixed-port.
+set -euo pipefail
+
+HOST="${MIHOMO_PROXY_HOST:-127.0.0.1}"
+PORT="${MIHOMO_PROXY_PORT:-7890}"
+
+usage() {
+  echo "Usage: $0 on|off|status" >&2
+  exit 1
+}
+
+[[ $# -ge 1 ]] || usage
+
+case "$1" in
+  on)
+    gsettings set org.gnome.system.proxy mode 'manual'
+    gsettings set org.gnome.system.proxy use-same-proxy true
+    gsettings set org.gnome.system.proxy.http host "$HOST"
+    gsettings set org.gnome.system.proxy.http port "$PORT"
+    gsettings set org.gnome.system.proxy.http enabled true
+    gsettings set org.gnome.system.proxy.http use-authentication false
+    gsettings set org.gnome.system.proxy.https host "$HOST"
+    gsettings set org.gnome.system.proxy.https port "$PORT"
+    gsettings set org.gnome.system.proxy.socks host "$HOST"
+    gsettings set org.gnome.system.proxy.socks port "$PORT"
+    gsettings set org.gnome.system.proxy.ftp host "$HOST"
+    gsettings set org.gnome.system.proxy.ftp port "$PORT"
+    gsettings set org.gnome.system.proxy ignore-hosts \
+      "['localhost', '127.0.0.0/8', '::1', '192.168.0.0/16', '10.0.0.0/8', '172.16.0.0/12']"
+    echo "System proxy ON → ${HOST}:${PORT} (mihomo mixed-port)"
+    ;;
+  off)
+    gsettings set org.gnome.system.proxy mode 'none'
+    echo "System proxy OFF"
+    ;;
+  status)
+    echo "mode=$(gsettings get org.gnome.system.proxy mode)"
+    echo "http=$(gsettings get org.gnome.system.proxy.http host):$(gsettings get org.gnome.system.proxy.http port) enabled=$(gsettings get org.gnome.system.proxy.http enabled)"
+    echo "https=$(gsettings get org.gnome.system.proxy.https host):$(gsettings get org.gnome.system.proxy.https port)"
+    echo "socks=$(gsettings get org.gnome.system.proxy.socks host):$(gsettings get org.gnome.system.proxy.socks port)"
+    ;;
+  *)
+    usage
+    ;;
+esac

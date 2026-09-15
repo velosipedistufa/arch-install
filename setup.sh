@@ -80,6 +80,29 @@ fi
 
 cp "$REPO/start-dwl.sh" "$HOME_DIR/appearance/start-dwl.sh"
 chmod +x "$HOME_DIR/appearance/start-dwl.sh" "$REPO/start-dwl.sh"
+
+# mihomo + tui (no proxy nodes — merge those locally)
+install -d "$HOME_DIR/.config/mihomo" "$HOME_DIR/.config/mihomo-tui" \
+	"$HOME_DIR/.config/systemd/user/mihomo.service.d" \
+	"$HOME_DIR/.local/bin" "$HOME_DIR/.local/share/applications"
+if [ ! -f "$HOME_DIR/.config/mihomo/config.yaml" ]; then
+	install -m 644 "$REPO/mihomo/config.yaml" "$HOME_DIR/.config/mihomo/config.yaml"
+fi
+install -m 644 "$REPO/mihomo/mihomo-tui/config.yaml" "$HOME_DIR/.config/mihomo-tui/config.yaml"
+install -m 644 "$REPO/mihomo/systemd/mihomo.service" "$HOME_DIR/.config/systemd/user/mihomo.service"
+install -m 644 "$REPO/mihomo/systemd/system-proxy.conf" "$HOME_DIR/.config/systemd/user/mihomo.service.d/"
+install -m 644 "$REPO/mihomo/systemd/tun-ipv6.conf" "$HOME_DIR/.config/systemd/user/mihomo.service.d/"
+install -m 755 "$REPO/mihomo/bin/"* "$HOME_DIR/.local/bin/"
+install -m 644 "$REPO/mihomo/desktop/mihomo-tui.desktop" "$HOME_DIR/.local/share/applications/"
+chown -R "$USER_NAME:$USER_NAME" "$HOME_DIR/.config/mihomo" "$HOME_DIR/.config/mihomo-tui" \
+	"$HOME_DIR/.config/systemd/user/mihomo.service" "$HOME_DIR/.config/systemd/user/mihomo.service.d" \
+	"$HOME_DIR/.local/bin" "$HOME_DIR/.local/share/applications/mihomo-tui.desktop"
+# TUN as user (idempotent)
+if command -v setcap >/dev/null 2>&1 && [ -x /usr/bin/mihomo ]; then
+	setcap 'cap_net_admin,cap_net_raw,cap_net_bind_service=+ep' /usr/bin/mihomo || true
+fi
+runuser -u "$USER_NAME" -- systemctl --user daemon-reload
+runuser -u "$USER_NAME" -- systemctl --user enable mihomo.service
 #cp config.h "$HOME_DIR/dwl/"
 #cp wallpaper.png "$HOME_DIR/appearance"
 

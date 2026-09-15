@@ -1,0 +1,16 @@
+[Unit]
+Description=Mihomo (Clash Meta) user service
+Documentation=https://wiki.metacubex.one
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/mihomo -d %h/.config/mihomo
+# Always restart: covers crash, clean exit, and in-core POST /restart re-exec
+Restart=always
+RestartSec=2
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=default.target

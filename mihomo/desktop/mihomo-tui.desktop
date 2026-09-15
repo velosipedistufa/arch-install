@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Mihomo TUI
+GenericName=Proxy Dashboard
+Comment=Mihomo dashboard — starts mihomo core and system proxy if needed
+Terminal=false
+TryExec=mihomo-tui-launch
+Exec=kitty -e mihomo-tui-launch
+Icon=network-vpn
+Categories=Network;
+Keywords=mihomo;clash;proxy;vpn;tui;metacubex;
+StartupNotify=false

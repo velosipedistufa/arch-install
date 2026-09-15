@@ -1,0 +1,65 @@
+# Mihomo program config (no proxy profiles — add those locally).
+mixed-port: 7890
+allow-lan: false
+mode: rule
+log-level: info
+ipv6: true
+
+external-controller: 127.0.0.1:9093
+
+# Dual-stack TUN — inet6-address is required or IPv6 bypasses the tunnel.
+# mihomo-ensure-tun-ipv6 re-asserts these before every service start.
+tun:
+  enable: true
+  stack: mixed
+  auto-route: true
+  auto-detect-interface: true
+  strict-route: false
+  inet4-address:
+    - 198.18.0.1/30
+  inet6-address:
+    - fdfe:dcba:9876::1/126
+  dns-hijack:
+    - any:53
+    - tcp://any:53
+
+dns:
+  enable: true
+  ipv6: true
+  ipv6-timeout: 300
+  # Real A/AAAA (not fake-ip) so IPv6-only names work.
+  enhanced-mode: redir-host
+  default-nameserver:
+    - 9.9.9.9
+    - 149.112.112.112
+    - 2620:fe::fe
+    - 2620:fe::9
+  nameserver:
+    - system
+    - 9.9.9.9
+    - 149.112.112.112
+    - 2620:fe::fe
+    - 2620:fe::9
+
+sniffer:
+  enable: true
+  override-destination: true
+  sniff:
+    HTTP:
+      ports: [80, 8080-8880]
+    TLS:
+      ports: [443, 8443]
+    QUIC:
+      ports: [443]
+
+# Placeholder — replace with your nodes locally (not stored in this repo template).
+proxies: []
+
+proxy-groups:
+  - name: PROXY
+    type: select
+    proxies:
+      - DIRECT
+
+rules:
+  - MATCH,PROXY
