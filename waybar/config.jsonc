@@ -72,9 +72,10 @@
         "format": "{volume}% {icon}",
         "format-muted": "muted {icon}",
         "format-icons": ["", "", ""],
-        "scroll-step": 5,
         "max-volume": 100,
         "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "on-scroll-up": "$HOME/.config/waybar/scripts/volume.sh up",
+        "on-scroll-down": "$HOME/.config/waybar/scripts/volume.sh down",
         "tooltip": true
     },
     "custom/cpu": {
