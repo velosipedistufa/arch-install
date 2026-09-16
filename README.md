@@ -33,6 +33,7 @@ Override path: `ARCH_INSTALL_GLOBALS=/path/to/globals.sh`.
 1. Live ISO: edit `globals.sh`, run `archinstall1.sh`, then in chroot `archinstall2.sh`.
 2. As root on the installed system: `setup.sh` (paru, dwl, Waybar, ly).
 3. Session: ly → `start-dwl.sh`.
+4. Shell: `zsh` + autosuggestions, syntax-highlighting, completions, history-substring-search, fzf, zoxide (`zsh/.zshrc`).
 
 ### Mihomo (program config only)
 

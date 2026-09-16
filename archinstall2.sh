@@ -28,7 +28,7 @@ grub-mkconfig -o /boot/grub/grub.cfg
 
 echo "${HOSTNAME:-arch}" > /etc/hostname
 
-id -u "$USER_NAME" >/dev/null 2>&1 || useradd -m -G wheel -s /bin/bash "$USER_NAME"
+id -u "$USER_NAME" >/dev/null 2>&1 || useradd -m -G wheel -s /usr/bin/zsh "$USER_NAME"
 
 # Set password (strong hash method). Value comes from globals.sh — not committed.
 echo "${USER_NAME}:${USER_PASSWORD}" | chpasswd --crypt-method YESCRYPT
