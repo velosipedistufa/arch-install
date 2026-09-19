@@ -97,9 +97,13 @@ install -m 644 "$REPO/mihomo/desktop/mihomo-tui.desktop" "$HOME_DIR/.local/share
 chown -R "$USER_NAME:$USER_NAME" "$HOME_DIR/.config/mihomo" "$HOME_DIR/.config/mihomo-tui" \
 	"$HOME_DIR/.config/systemd/user/mihomo.service" "$HOME_DIR/.config/systemd/user/mihomo.service.d" \
 	"$HOME_DIR/.local/bin" "$HOME_DIR/.local/share/applications/mihomo-tui.desktop"
-# TUN as user (idempotent)
+# TUN as user (idempotent). Pacman upgrades strip file caps — hook puts them back.
 if command -v setcap >/dev/null 2>&1 && [ -x /usr/bin/mihomo ]; then
 	setcap 'cap_net_admin,cap_net_raw,cap_net_bind_service=+ep' /usr/bin/mihomo || true
+fi
+if [ -f "$REPO/mihomo/pacman/mihomo-setcap.hook" ]; then
+	install -d /etc/pacman.d/hooks
+	install -m 644 "$REPO/mihomo/pacman/mihomo-setcap.hook" /etc/pacman.d/hooks/mihomo-setcap.hook
 fi
 runuser -u "$USER_NAME" -- systemctl --user daemon-reload
 runuser -u "$USER_NAME" -- systemctl --user enable mihomo.service

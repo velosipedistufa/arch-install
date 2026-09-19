@@ -11,14 +11,16 @@ Program-level settings for **mihomo** (core) and **mihomo-tui** (dashboard).
 
 | `mihomo-tui/` | TUI API URL / UI defaults |
 | `systemd/` | User unit + drop-ins (system proxy, TUN IPv6 ensure) |
-| `bin/` | `mihomo-ensure-tun-ipv6`, `mihomo-system-proxy`, `mihomo-tui-launch` |
+| `bin/` | `mihomo-ensure-tun` (YAML+API pin), `mihomo-system-proxy`, `mihomo-tui-launch` |
+| `pacman/mihomo-setcap.hook` | Restores CAP_NET_ADMIN after `mihomo`/`mihomo-bin` upgrades |
 | `desktop/` | Fuzzel/desktop entry |
 
 ## Why `inet6-address`?
 
 Without `tun.inet6-address`, TUN often redirects **IPv4 only** and IPv6 goes direct.  
 `mihomo-tui` / `PATCH /configs` can omit that field; **Restart** then drops IPv6 tunneling until YAML is re-applied.  
-`bin/mihomo-ensure-tun-ipv6` + systemd `ExecStartPre` re-assert it on every start.
+`bin/mihomo-ensure-tun` + systemd `ExecStartPre`/`ExecStartPost --apply` re-assert enable + addresses on every start.
+A pacman hook restores `setcap` after package upgrades (file capabilities are otherwise lost and TUN snaps back to false).
 
 ## Install onto a machine
 
@@ -37,7 +39,7 @@ install -m 644 "$REPO/mihomo/systemd/tun-ipv6.conf" ~/.config/systemd/user/mihom
 install -m 755 "$REPO/mihomo/bin/"* ~/.local/bin/
 install -m 644 "$REPO/mihomo/desktop/mihomo-tui.desktop" ~/.local/share/applications/
 
-# Caps for TUN as user:
+# Caps for TUN as user (also installed as /etc/pacman.d/hooks/mihomo-setcap.hook):
 #   sudo setcap 'cap_net_admin,cap_net_raw,cap_net_bind_service=+ep' /usr/bin/mihomo
 
 systemctl --user daemon-reload

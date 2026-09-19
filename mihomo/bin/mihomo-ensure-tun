@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+# Keep TUN enabled and dual-stack in on-disk YAML, and optionally PATCH the live API.
+# mihomo-tui PATCH/Restart often drops enable or inet6-address.
+set -euo pipefail
+
+CONFIG="${MIHOMO_CONFIG:-$HOME/.config/mihomo/config.yaml}"
+INET4="${MIHOMO_TUN_INET4:-198.18.0.1/30}"
+INET6="${MIHOMO_TUN_INET6:-fdfe:dcba:9876::1/126}"
+API="${MIHOMO_API:-http://127.0.0.1:9093}"
+APPLY=0
+for a in "$@"; do
+	[ "$a" = "--apply" ] && APPLY=1
+done
+
+if [[ ! -f "$CONFIG" ]]; then
+	echo "mihomo-ensure-tun: missing $CONFIG" >&2
+	exit 0
+fi
+
+python3 - "$CONFIG" "$INET4" "$INET6" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+inet4, inet6 = sys.argv[2], sys.argv[3]
+text = path.read_text()
+lines = text.splitlines(True)
+out = []
+in_tun = False
+tun_indent = ""
+have_enable = have_inet4 = have_inet6 = False
+inserted = False
+
+def is_top_level(raw: str) -> bool:
+    s = raw.strip()
+    if not s or s.startswith("#"):
+        return False
+    return not raw.startswith((" ", "\t")) and ":" in s
+
+def inject_missing():
+    ind = tun_indent + "  "
+    chunk = ""
+    if not have_enable:
+        chunk += f"{ind}enable: true\n"
+    if not have_inet4:
+        chunk += f"{ind}inet4-address:\n{ind}  - {inet4}\n"
+    if not have_inet6:
+        chunk += f"{ind}inet6-address:\n{ind}  - {inet6}\n"
+    return chunk
+
+i = 0
+while i < len(lines):
+    raw = lines[i]
+    stripped = raw.strip()
+
+    if is_top_level(raw):
+        if in_tun and not inserted:
+            extra = inject_missing()
+            if extra:
+                out.append(extra)
+            inserted = True
+        in_tun = stripped == "tun:" or stripped.startswith("tun:")
+        if in_tun:
+            tun_indent = raw[: len(raw) - len(raw.lstrip())]
+            have_enable = have_inet4 = have_inet6 = False
+            inserted = False
+        out.append(raw)
+        i += 1
+        continue
+
+    if in_tun:
+        if stripped.startswith("enable:"):
+            have_enable = True
+            ind = tun_indent + "  "
+            out.append(f"{ind}enable: true\n")
+            i += 1
+            continue
+        if stripped.startswith("inet4-address:"):
+            have_inet4 = True
+            out.append(raw)
+            i += 1
+            while i < len(lines) and (lines[i].startswith(" ") or lines[i].startswith("\t")) and lines[i].strip().startswith("-"):
+                i += 1
+            ind = tun_indent + "  "
+            out.append(f"{ind}  - {inet4}\n")
+            continue
+        if stripped.startswith("inet6-address:"):
+            have_inet6 = True
+            out.append(raw)
+            i += 1
+            while i < len(lines) and (lines[i].startswith(" ") or lines[i].startswith("\t")) and lines[i].strip().startswith("-"):
+                i += 1
+            ind = tun_indent + "  "
+            out.append(f"{ind}  - {inet6}\n")
+            continue
+
+    out.append(raw)
+    i += 1
+
+if in_tun and not inserted:
+    extra = inject_missing()
+    if extra:
+        out.append(extra)
+
+new = "".join(out)
+if new != text:
+    path.write_text(new)
+    print(f"mihomo-ensure-tun: updated {path}")
+else:
+    print(f"mihomo-ensure-tun: yaml ok {path}")
+PY
+
+if [[ "$APPLY" -eq 1 ]]; then
+	for _ in $(seq 1 40); do
+		curl -fsS --connect-timeout 0.3 --max-time 1 "${API}/version" >/dev/null 2>&1 && break
+		sleep 0.15
+	done
+	curl -fsS -X PATCH "${API}/configs" -H 'Content-Type: application/json' \
+		-d "{\"tun\":{\"enable\":true,\"stack\":\"mixed\",\"auto-route\":true,\"auto-detect-interface\":true,\"strict-route\":false,\"inet4-address\":[\"${INET4}\"],\"inet6-address\":[\"${INET6}\"],\"dns-hijack\":[\"any:53\",\"tcp://any:53\"]}}" \
+		>/dev/null 2>&1 || true
+	echo "mihomo-ensure-tun: applied TUN enable via API"
+fi

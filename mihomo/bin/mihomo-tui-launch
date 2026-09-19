@@ -41,8 +41,10 @@ runtime_has_inet6() {
 }
 
 ensure_tun_ipv6_disk() {
-  if [[ -x "$HOME/.local/bin/mihomo-ensure-tun-ipv6" ]]; then
-    "$HOME/.local/bin/mihomo-ensure-tun-ipv6" >/dev/null || true
+  local b="$HOME/.local/bin/mihomo-ensure-tun"
+  [[ -x "$b" ]] || b="$HOME/.local/bin/mihomo-ensure-tun-ipv6"
+  if [[ -x "$b" ]]; then
+    "$b" >/dev/null || true
   fi
 }
 
@@ -111,9 +113,11 @@ if ! api_up; then
   fi
 fi
 
-# If core is up but IPv6 TUN was stripped (common after TUI Restart/PATCH), re-apply YAML.
-if ! runtime_has_inet6; then
-  ensure_tun_ipv6_disk
+# If TUN/IPv6 was stripped by TUI PATCH/Restart, pin it again.
+ensure_tun_ipv6_disk
+if [[ -x "$HOME/.local/bin/mihomo-ensure-tun" ]]; then
+  "$HOME/.local/bin/mihomo-ensure-tun" --apply >/dev/null || true
+elif ! runtime_has_inet6; then
   force_reload_config
   sleep 0.3
 fi
