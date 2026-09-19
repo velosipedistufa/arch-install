@@ -1,41 +1,82 @@
 #!/usr/bin/env bash
-# Keep TUN enabled and dual-stack in on-disk YAML, and optionally PATCH the live API.
-# mihomo-tui PATCH/Restart often drops enable or inet6-address.
+# Pin TUN in YAML; optional --cleanup of foreign TUN/ip rules; optional --apply via API.
 set -euo pipefail
 
 CONFIG="${MIHOMO_CONFIG:-$HOME/.config/mihomo/config.yaml}"
 INET4="${MIHOMO_TUN_INET4:-198.18.0.1/30}"
 INET6="${MIHOMO_TUN_INET6:-fdfe:dcba:9876::1/126}"
 API="${MIHOMO_API:-http://127.0.0.1:9093}"
+G="${HOME}/.config/arch-install/globals.sh"
+[ -f "$G" ] || G="${HOME}/.config/setup_linux/globals.sh"
+# shellcheck disable=SC1090
+[ -f "$G" ] && . "$G" || true
+VPS="${VPS_HOST:-}"
+VPS_A_LIT="${VPS_A:-}"
+VPS_AAAA_LIT="${VPS_AAAA:-}"
+
 APPLY=0
+CLEANUP=0
 for a in "$@"; do
 	[ "$a" = "--apply" ] && APPLY=1
+	[ "$a" = "--cleanup" ] && CLEANUP=1
 done
+
+cleanup_foreign() {
+	pkill -x ThroneCore >/dev/null 2>&1 || true
+	pkill -f '/usr/lib/throne/Throne' >/dev/null 2>&1 || true
+	sleep 0.2
+	ip link del throne-tun >/dev/null 2>&1 || true
+	# Throne/old clash leftovers (same table/fwmark mihomo wants)
+	while ip rule del fwmark 0x2024 >/dev/null 2>&1; do :; done
+	while ip rule del fwmark 0x2023 >/dev/null 2>&1; do :; done
+	while ip rule del lookup 2022 >/dev/null 2>&1; do :; done
+	while ip rule del pref 9000 >/dev/null 2>&1; do :; done
+	while ip rule del pref 9001 >/dev/null 2>&1; do :; done
+	while ip rule del pref 9002 >/dev/null 2>&1; do :; done
+	while ip rule del pref 32768 >/dev/null 2>&1; do :; done
+	while ip rule del pref 1 >/dev/null 2>&1; do :; done
+	ip route flush table 2022 >/dev/null 2>&1 || true
+	echo "mihomo-ensure-tun: cleaned foreign TUN/ip rules"
+}
+
+if [[ "$CLEANUP" -eq 1 ]]; then
+	cleanup_foreign
+fi
 
 if [[ ! -f "$CONFIG" ]]; then
 	echo "mihomo-ensure-tun: missing $CONFIG" >&2
 	exit 0
 fi
 
-python3 - "$CONFIG" "$INET4" "$INET6" <<'PY'
+python3 - "$CONFIG" "$INET4" "$INET6" "$VPS" "$VPS_A_LIT" "$VPS_AAAA_LIT" <<'PY'
 import sys
 from pathlib import Path
 
 path = Path(sys.argv[1])
-inet4, inet6 = sys.argv[2], sys.argv[3]
+inet4, inet6, vps, vps_a, vps_aaaa = sys.argv[2:7]
 text = path.read_text()
 lines = text.splitlines(True)
 out = []
 in_tun = False
 tun_indent = ""
 have_enable = have_inet4 = have_inet6 = False
+have_ex4 = have_ex6 = False
 inserted = False
+
+EX4 = ["192.168.0.0/16", "10.0.0.0/8", "172.16.0.0/12", "127.0.0.0/8"]
+EX6 = ["fe80::/10"]
 
 def is_top_level(raw: str) -> bool:
     s = raw.strip()
     if not s or s.startswith("#"):
         return False
     return not raw.startswith((" ", "\t")) and ":" in s
+
+def skip_list(i, lines):
+    i += 1
+    while i < len(lines) and (lines[i].startswith(" ") or lines[i].startswith("\t")) and lines[i].strip().startswith("-"):
+        i += 1
+    return i
 
 def inject_missing():
     ind = tun_indent + "  "
@@ -46,6 +87,14 @@ def inject_missing():
         chunk += f"{ind}inet4-address:\n{ind}  - {inet4}\n"
     if not have_inet6:
         chunk += f"{ind}inet6-address:\n{ind}  - {inet6}\n"
+    if not have_ex4:
+        chunk += f"{ind}inet4-route-exclude-address:\n"
+        for c in EX4:
+            chunk += f"{ind}  - {c}\n"
+    if not have_ex6:
+        chunk += f"{ind}inet6-route-exclude-address:\n"
+        for c in EX6:
+            chunk += f"{ind}  - {c}\n"
     return chunk
 
 i = 0
@@ -62,36 +111,44 @@ while i < len(lines):
         in_tun = stripped == "tun:" or stripped.startswith("tun:")
         if in_tun:
             tun_indent = raw[: len(raw) - len(raw.lstrip())]
-            have_enable = have_inet4 = have_inet6 = False
+            have_enable = have_inet4 = have_inet6 = have_ex4 = have_ex6 = False
             inserted = False
         out.append(raw)
         i += 1
         continue
 
     if in_tun:
+        ind = tun_indent + "  "
         if stripped.startswith("enable:"):
             have_enable = True
-            ind = tun_indent + "  "
             out.append(f"{ind}enable: true\n")
             i += 1
             continue
         if stripped.startswith("inet4-address:"):
             have_inet4 = True
             out.append(raw)
-            i += 1
-            while i < len(lines) and (lines[i].startswith(" ") or lines[i].startswith("\t")) and lines[i].strip().startswith("-"):
-                i += 1
-            ind = tun_indent + "  "
+            i = skip_list(i, lines)
             out.append(f"{ind}  - {inet4}\n")
             continue
         if stripped.startswith("inet6-address:"):
             have_inet6 = True
             out.append(raw)
-            i += 1
-            while i < len(lines) and (lines[i].startswith(" ") or lines[i].startswith("\t")) and lines[i].strip().startswith("-"):
-                i += 1
-            ind = tun_indent + "  "
+            i = skip_list(i, lines)
             out.append(f"{ind}  - {inet6}\n")
+            continue
+        if stripped.startswith("inet4-route-exclude-address:"):
+            have_ex4 = True
+            out.append(raw)
+            i = skip_list(i, lines)
+            for c in EX4:
+                out.append(f"{ind}  - {c}\n")
+            continue
+        if stripped.startswith("inet6-route-exclude-address:"):
+            have_ex6 = True
+            out.append(raw)
+            i = skip_list(i, lines)
+            for c in EX6:
+                out.append(f"{ind}  - {c}\n")
             continue
 
     out.append(raw)
@@ -102,9 +159,43 @@ if in_tun and not inserted:
     if extra:
         out.append(extra)
 
-new = "".join(out)
-if new != text:
-    path.write_text(new)
+# DIRECT: LAN + proxy-server host (from globals, not a node UUID)
+wanted = [
+    "IP-CIDR,127.0.0.0/8,DIRECT",
+    "IP-CIDR,192.168.0.0/16,DIRECT",
+    "IP-CIDR,10.0.0.0/8,DIRECT",
+    "IP-CIDR,172.16.0.0/12,DIRECT",
+]
+if vps:
+    wanted.append(f"DOMAIN-SUFFIX,{vps},DIRECT")
+if vps_a:
+    wanted.append(f"IP-CIDR,{vps_a}/32,DIRECT")
+if vps_aaaa:
+    wanted.append(f"IP-CIDR6,{vps_aaaa}/128,DIRECT")
+
+body = "".join(out)
+existing = {line.strip().lstrip("- ").strip() for line in body.splitlines()}
+missing = [w for w in wanted if w not in existing]
+if missing:
+    lined = body.splitlines(True)
+    nout = []
+    injected = False
+    for raw in lined:
+        if (not injected) and raw.strip().startswith("- MATCH,"):
+            ind = raw[: len(raw) - len(raw.lstrip())]
+            for w in missing:
+                nout.append(f"{ind}- {w}\n")
+            injected = True
+        nout.append(raw)
+    if not injected:
+        nout.append("rules:\n")
+        for w in missing:
+            nout.append(f"  - {w}\n")
+        nout.append("  - MATCH,PROXY\n")
+    body = "".join(nout)
+
+if body != text:
+    path.write_text(body)
     print(f"mihomo-ensure-tun: updated {path}")
 else:
     print(f"mihomo-ensure-tun: yaml ok {path}")
@@ -115,8 +206,8 @@ if [[ "$APPLY" -eq 1 ]]; then
 		curl -fsS --connect-timeout 0.3 --max-time 1 "${API}/version" >/dev/null 2>&1 && break
 		sleep 0.15
 	done
-	curl -fsS -X PATCH "${API}/configs" -H 'Content-Type: application/json' \
-		-d "{\"tun\":{\"enable\":true,\"stack\":\"mixed\",\"auto-route\":true,\"auto-detect-interface\":true,\"strict-route\":false,\"inet4-address\":[\"${INET4}\"],\"inet6-address\":[\"${INET6}\"],\"dns-hijack\":[\"any:53\",\"tcp://any:53\"]}}" \
+	curl -fsS -X PATCH "${API}/configs?force=true" -H 'Content-Type: application/json' \
+		-d "{\"tun\":{\"enable\":true,\"stack\":\"mixed\",\"auto-route\":true,\"auto-detect-interface\":true,\"strict-route\":false,\"inet4-address\":[\"${INET4}\"],\"inet6-address\":[\"${INET6}\"],\"inet4-route-exclude-address\":[\"192.168.0.0/16\",\"10.0.0.0/8\",\"172.16.0.0/12\",\"127.0.0.0/8\"],\"inet6-route-exclude-address\":[\"fe80::/10\"],\"dns-hijack\":[\"any:53\",\"tcp://any:53\"]}}" \
 		>/dev/null 2>&1 || true
 	echo "mihomo-ensure-tun: applied TUN enable via API"
 fi

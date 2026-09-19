@@ -19,6 +19,13 @@ tun:
     - 198.18.0.1/30
   inet6-address:
     - fdfe:dcba:9876::1/126
+  inet4-route-exclude-address:
+    - 192.168.0.0/16
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 127.0.0.0/8
+  inet6-route-exclude-address:
+    - fe80::/10
   dns-hijack:
     - any:53
     - tcp://any:53
@@ -62,4 +69,8 @@ proxy-groups:
       - DIRECT
 
 rules:
+  - IP-CIDR,127.0.0.0/8,DIRECT
+  - IP-CIDR,192.168.0.0/16,DIRECT
+  - IP-CIDR,10.0.0.0/8,DIRECT
+  - IP-CIDR,172.16.0.0/12,DIRECT
   - MATCH,PROXY

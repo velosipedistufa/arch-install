@@ -84,8 +84,7 @@ if [ -f "$HOME/.config/swayidle/config" ]; then
 	pgrep -x swayidle >/dev/null 2>&1 || swayidle -C "$HOME/.config/swayidle/config" >>"$LOG" 2>&1 &
 fi
 
-# User manager lingers across ly logout, so mihomo may still be the pre-setcap
-# process. Re-exec on each graphical login so TUN caps and --apply take effect.
+# Re-exec mihomo so TUN caps apply; ExecStartPre cleans Throne leftover routes.
 if command -v systemctl >/dev/null 2>&1; then
 	systemctl --user restart mihomo.service >>"$LOG" 2>&1 || log "mihomo restart failed"
 fi
