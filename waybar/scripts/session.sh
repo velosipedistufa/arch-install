@@ -13,7 +13,11 @@ case "${choice:-}" in
 		exec systemctl suspend
 		;;
 	'Exit to ly')
-		exec loginctl terminate-session "${XDG_SESSION_ID:-}"
+		# Kill dwl only. start-dwl.sh is waiting on it and will return to ly.
+		# terminate-session + lingering user manager leaves stale wayland sockets
+		# (no waybar/wallpaper on the next login).
+		pkill -x dwl
+		exit 0
 		;;
 	*)
 		exit 0
