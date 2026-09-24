@@ -1,6 +1,7 @@
 #!/bin/sh
 export XDG_SESSION_TYPE=wayland
-export XDG_CURRENT_DESKTOP=dwl
+# :wlroots so xdg-desktop-portal-wlr matches UseIn= (needed for Firefox screen share)
+export XDG_CURRENT_DESKTOP=dwl:wlroots
 export XDG_SESSION_DESKTOP=dwl
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 # wlroots treats WAYLAND_DISPLAY as "nest on that compositor".
@@ -59,7 +60,18 @@ fi
 export WAYLAND_DISPLAY=wayland-0
 log "WAYLAND_DISPLAY=$WAYLAND_DISPLAY"
 
-/usr/lib/xdg-desktop-portal-wlr &
+# Portals started from lingering user@.service have no Wayland; re-export and
+# start wlr + the main portal in this compositor (Firefox screen share).
+if command -v dbus-update-activation-environment >/dev/null 2>&1; then
+	dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_SESSION_DESKTOP 2>>"$LOG" || true
+fi
+systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_SESSION_DESKTOP 2>>"$LOG" || true
+killall -q xdg-desktop-portal xdg-desktop-portal-wlr xdg-desktop-portal-gtk 2>/dev/null || true
+/usr/lib/xdg-desktop-portal-wlr >>"$LOG" 2>&1 &
+sleep 0.15
+/usr/lib/xdg-desktop-portal >>"$LOG" 2>&1 &
+/usr/lib/xdg-desktop-portal-gtk >>"$LOG" 2>&1 &
+
 pgrep -x mako >/dev/null 2>&1 || mako >>"$LOG" 2>&1 &
 if [ -n "${KEYBOARD_EVENT:-}" ] && [ -r "${KEYBOARD_EVENT}" ]; then
 	pgrep -x layout-watch >/dev/null 2>&1 || "$HOME/.config/waybar/scripts/layout-watch" "$KEYBOARD_EVENT" >>"$LOG" 2>&1 &

@@ -80,6 +80,10 @@ fi
 
 cp "$REPO/start-dwl.sh" "$HOME_DIR/appearance/start-dwl.sh"
 chmod +x "$HOME_DIR/appearance/start-dwl.sh" "$REPO/start-dwl.sh"
+install -d "$HOME_DIR/.config/xdg-desktop-portal" "$HOME_DIR/.config/xdg-desktop-portal-wlr"
+install -m 644 "$REPO/xdg-desktop-portal/portals.conf" "$HOME_DIR/.config/xdg-desktop-portal/portals.conf"
+install -m 644 "$REPO/xdg-desktop-portal-wlr/config" "$HOME_DIR/.config/xdg-desktop-portal-wlr/config"
+chown -R "$USER_NAME:$USER_NAME" "$HOME_DIR/.config/xdg-desktop-portal" "$HOME_DIR/.config/xdg-desktop-portal-wlr"
 
 # mihomo + tui (no proxy nodes — merge those locally)
 install -d "$HOME_DIR/.config/mihomo" "$HOME_DIR/.config/mihomo-tui" \
