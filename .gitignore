@@ -4,6 +4,7 @@ globals.sh
 # Session / local junk, never publish
 forGrok.md
 PLAN_WAYBAR.md
+handoff.md
 *.log
 wev.txt
 __pycache__/
