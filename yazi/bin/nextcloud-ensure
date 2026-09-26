@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# Write the Nextcloud rclone remote from gitignored globals and make sure it is mounted.
+# Password stays in ~/.config/rclone/rclone.conf (mode 600), never in git.
+set -euo pipefail
+
+G="${HOME}/.config/arch-install/globals.sh"
+if [[ ! -f "$G" ]]; then
+	G="${HOME}/GitRepos/arch-install/globals.sh"
+fi
+if [[ ! -f "$G" ]]; then
+	echo "nextcloud-ensure: globals.sh not found" >&2
+	exit 1
+fi
+# shellcheck disable=SC1090
+. "$G"
+
+: "${SCREENSHOT_DAV_URL:?}"
+: "${SCREENSHOT_DAV_USER:?}"
+: "${SCREENSHOT_DAV_PASSWORD:?}"
+
+ROOT="$(SCREENSHOT_DAV_URL="$SCREENSHOT_DAV_URL" python3 - <<'PY'
+import os, re, sys
+url = os.environ["SCREENSHOT_DAV_URL"]
+m = re.search(r"(https://[^/]+/remote.php/dav/files/[^/]+)", url)
+if not m:
+    sys.exit("nextcloud-ensure: cannot derive WebDAV root from SCREENSHOT_DAV_URL")
+print(m.group(1) + "/")
+PY
+)"
+
+umask 077
+mkdir -p "${HOME}/.config/rclone" "${HOME}/.local/mnt/nextcloud"
+CONF="${HOME}/.config/rclone/rclone.conf"
+OBSCURED="$(printf '%s\n' "$SCREENSHOT_DAV_PASSWORD" | rclone obscure -)"
+
+python3 - "$CONF" "$ROOT" "$SCREENSHOT_DAV_USER" "$OBSCURED" <<'PY'
+import pathlib, sys
+conf, url, user, obscured = sys.argv[1:]
+block = (
+    "[nextcloud]\n"
+    "type = webdav\n"
+    f"url = {url}\n"
+    "vendor = nextcloud\n"
+    f"user = {user}\n"
+    f"pass = {obscured}\n"
+)
+path = pathlib.Path(conf)
+text = path.read_text() if path.exists() else ""
+lines = []
+skip = False
+for line in text.splitlines(True):
+    if line.startswith("[") and line.strip().endswith("]"):
+        skip = line.strip() == "[nextcloud]"
+    if not skip:
+        lines.append(line)
+body = "".join(lines).rstrip() + ("\n\n" if lines else "") + block
+path.write_text(body)
+path.chmod(0o600)
+PY
+unset OBSCURED SCREENSHOT_DAV_PASSWORD
+
+if ! mountpoint -q "${HOME}/.local/mnt/nextcloud"; then
+	systemctl --user start nextcloud-mount.service
+	for _ in $(seq 1 50); do
+		mountpoint -q "${HOME}/.local/mnt/nextcloud" && break
+		sleep 0.2
+	done
+fi
+mountpoint -q "${HOME}/.local/mnt/nextcloud"

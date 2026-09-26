@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh yazi USB drive icons
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/.local/bin/yazi-usb-watch
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

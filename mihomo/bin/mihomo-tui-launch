@@ -2,13 +2,13 @@
 # Launch mihomo-tui after ensuring required backends are up:
 #   - dual-stack TUN addresses on disk (inet6 often stripped by TUI/API)
 #   - mihomo core (user systemd unit, or fallback process)
-#   - REST API on 127.0.0.1:9093
+#   - REST API on [::1]:9093
 #   - GNOME/XDG system proxy pointed at mihomo mixed-port
 set -euo pipefail
 
 export PATH="${HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin:${PATH:-}"
 
-API_URL="${MIHOMO_API:-http://127.0.0.1:9093}"
+API_URL="${MIHOMO_API:-http://[::1]:9093}"
 CONFIG_DIR="${MIHOMO_CONFIG_DIR:-$HOME/.config/mihomo}"
 CONFIG_FILE="${MIHOMO_CONFIG:-$CONFIG_DIR/config.yaml}"
 TUI_BIN="${MIHOMO_TUI_BIN:-}"
@@ -31,11 +31,11 @@ export EDITOR="${EDITOR:-nvim}"
 export VISUAL="${VISUAL:-${EDITOR}}"
 
 api_up() {
-  curl -fsS --connect-timeout 0.3 --max-time 1 "${API_URL}/version" >/dev/null 2>&1
+  curl -gfsS --connect-timeout 0.3 --max-time 1 "${API_URL}/version" >/dev/null 2>&1
 }
 
 runtime_has_inet6() {
-  curl -fsS --connect-timeout 0.5 --max-time 2 "${API_URL}/configs" 2>/dev/null \
+  curl -gfsS --connect-timeout 0.5 --max-time 2 "${API_URL}/configs" 2>/dev/null \
     | python3 -c 'import sys,json; t=json.load(sys.stdin).get("tun") or {}; raise SystemExit(0 if t.get("inet6-address") else 1)' \
     2>/dev/null
 }
@@ -49,7 +49,7 @@ ensure_tun_ipv6_disk() {
 }
 
 force_reload_config() {
-  curl -fsS -X PUT "${API_URL}/configs?force=true" \
+  curl -gfsS -X PUT "${API_URL}/configs?force=true" \
     -H 'Content-Type: application/json' \
     -d "{\"path\":\"${CONFIG_FILE}\"}" >/dev/null 2>&1 || true
 }
@@ -88,12 +88,12 @@ ensure_system_proxy() {
   fi
   if command -v gsettings >/dev/null 2>&1; then
     gsettings set org.gnome.system.proxy mode 'manual' >/dev/null 2>&1 || true
-    gsettings set org.gnome.system.proxy.http host '127.0.0.1' >/dev/null 2>&1 || true
+    gsettings set org.gnome.system.proxy.http host '::1' >/dev/null 2>&1 || true
     gsettings set org.gnome.system.proxy.http port 7890 >/dev/null 2>&1 || true
     gsettings set org.gnome.system.proxy.http enabled true >/dev/null 2>&1 || true
-    gsettings set org.gnome.system.proxy.https host '127.0.0.1' >/dev/null 2>&1 || true
+    gsettings set org.gnome.system.proxy.https host '::1' >/dev/null 2>&1 || true
     gsettings set org.gnome.system.proxy.https port 7890 >/dev/null 2>&1 || true
-    gsettings set org.gnome.system.proxy.socks host '127.0.0.1' >/dev/null 2>&1 || true
+    gsettings set org.gnome.system.proxy.socks host '::1' >/dev/null 2>&1 || true
     gsettings set org.gnome.system.proxy.socks port 7890 >/dev/null 2>&1 || true
   fi
 }

@@ -1,11 +1,17 @@
 # Mihomo program config (no proxy profiles — add those locally).
+# mixed-port and the API listen on IPv6 localhost only.
+# bind-address is ignored unless allow-lan is true; lan-allowed-ips
+# keeps that socket limited to ::1 (not the LAN, not 0.0.0.0).
 mixed-port: 7890
-allow-lan: false
+allow-lan: true
+bind-address: "[::1]"
+lan-allowed-ips:
+  - "::1/128"
 mode: rule
 log-level: info
 ipv6: true
 
-external-controller: 127.0.0.1:9093
+external-controller: "[::1]:9093"
 
 # Dual-stack TUN — inet6-address is required or IPv6 bypasses the tunnel.
 # mihomo-ensure-tun-ipv6 re-asserts these before every service start.
@@ -25,6 +31,7 @@ tun:
     - 172.16.0.0/12
     - 127.0.0.0/8
   inet6-route-exclude-address:
+    - "::1/128"
     - fe80::/10
   dns-hijack:
     - any:53
@@ -70,6 +77,7 @@ proxy-groups:
 
 rules:
   - IP-CIDR,127.0.0.0/8,DIRECT
+  - IP-CIDR6,::1/128,DIRECT
   - IP-CIDR,192.168.0.0/16,DIRECT
   - IP-CIDR,10.0.0.0/8,DIRECT
   - IP-CIDR,172.16.0.0/12,DIRECT

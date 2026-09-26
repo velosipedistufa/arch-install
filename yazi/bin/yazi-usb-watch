@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Refresh the USB list yazi draws, and ping open yazi instances.
+set -u
+RUNTIME="${XDG_RUNTIME_DIR:-/tmp}"
+JSON="$RUNTIME/yazi-usb.json"
+SCRIPT="${HOME}/.config/yazi/plugins/usb.yazi/volumes.py"
+
+refresh() {
+	python3 "$SCRIPT" >"$JSON.tmp" 2>/dev/null && mv -f "$JSON.tmp" "$JSON"
+	ya pub usb --str 1 >/dev/null 2>&1 || true
+}
+
+refresh
+# udisks prints several lines per plug; collapse them.
+udisksctl monitor | while read -r _; do
+	sleep 0.4
+	# Drop the lines that arrived during the sleep.
+	while read -r -t 0.1 _; do :; done
+	refresh
+done

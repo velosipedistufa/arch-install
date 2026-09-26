@@ -19,3 +19,21 @@ on-button-right=dismiss
 [urgency=critical]
 border-color=#ff6a00
 default-timeout=8000
+
+# Android-style do not disturb. Later sections override urgency, so
+# Telegram / Firefox / critical popups are not drawn at all.
+[mode=do-not-disturb]
+invisible=1
+max-visible=0
+
+[mode=do-not-disturb urgency=low]
+invisible=1
+max-visible=0
+
+[mode=do-not-disturb urgency=normal]
+invisible=1
+max-visible=0
+
+[mode=do-not-disturb urgency=critical]
+invisible=1
+max-visible=0

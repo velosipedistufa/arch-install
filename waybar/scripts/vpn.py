@@ -13,8 +13,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib import cache_dir, curl, doh, emit, iso_flag, load_json, save_json  # noqa: E402
 
-API = "http://127.0.0.1:9093"
-MIXED = "http://127.0.0.1:7890"
+API = "http://[::1]:9093"
+MIXED = "http://[::1]:7890"
 GEO_FILE = cache_dir() / "geo.json"
 GEO_TTL = 30 * 60
 
@@ -100,7 +100,7 @@ def geo(ip: str) -> tuple[str, str]:
 def main() -> None:
     cfg = api_get("/configs")
     if not cfg:
-        emit("vpn --", "mihomo API 127.0.0.1:9093 unreachable", "down")
+        emit("vpn --", "mihomo API [::1]:9093 unreachable", "down")
         return
     tun = cfg.get("tun") or {}
     tun_on = bool(tun.get("enable"))

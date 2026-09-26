@@ -22,6 +22,7 @@
         "clock#date"
     ],
     "modules-right": [
+        "custom/dnd",
         "wireplumber",
         "custom/cpu",
         "temperature",
@@ -67,6 +68,13 @@
         "interval": 60,
         "format": "{:%d.%m.%Y}",
         "tooltip": false
+    },
+    "custom/dnd": {
+        "exec": "python3 $HOME/.config/waybar/scripts/dnd.py",
+        "return-type": "json",
+        "interval": 1,
+        "tooltip": true,
+        "on-click": "$HOME/.config/waybar/scripts/dnd-toggle.sh toggle"
     },
     "wireplumber": {
         "format": "{volume}% {icon}",

@@ -1,0 +1,19 @@
+[Unit]
+Description=Nextcloud WebDAV mount for yazi
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/mkdir -p %h/.local/mnt/nextcloud
+ExecStart=/usr/bin/rclone mount nextcloud: %h/.local/mnt/nextcloud --vfs-cache-mode writes --dir-cache-time 15s --config %h/.config/rclone/rclone.conf --allow-non-empty
+ExecStop=/usr/bin/fusermount3 -uz %h/.local/mnt/nextcloud
+Restart=on-failure
+RestartSec=3
+Environment=http_proxy=http://[::1]:7890
+Environment=https_proxy=http://[::1]:7890
+Environment=HTTP_PROXY=http://[::1]:7890
+Environment=HTTPS_PROXY=http://[::1]:7890
+Environment=ALL_PROXY=http://[::1]:7890
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,33 @@
+# https://yazi-rs.github.io/docs/configuration/yazi
+#:schema https://yazi-rs.github.io/schemas/yazi.json
+
+[opener]
+# Prefer swayimg for images (orphan = don't block yazi)
+image = [
+	{ run = 'swayimg %*',  desc = "swayimg", for = "linux", orphan = true },
+	{ run = 'xdg-open %s1', desc = "Open",    for = "linux", orphan = true },
+]
+open = [
+	{ run = 'xdg-open %s1', desc = "Open", for = "linux", orphan = true },
+]
+reveal = [
+	{ run = 'xdg-open %d1', desc = "Reveal", for = "linux", orphan = true },
+]
+edit = [
+	{ run = '${EDITOR:-nvim} %s', desc = "$EDITOR", for = "unix", block = true },
+]
+play = [
+	{ run = 'xdg-open %s1', desc = "Play", for = "linux", orphan = true },
+]
+
+[open]
+rules = [
+	{ url = "*/", use = [ "edit", "open", "reveal" ] },
+	{ mime = "text/*", use = [ "edit", "reveal" ] },
+	# Images → swayimg first
+	{ mime = "image/*", use = [ "image", "reveal" ] },
+	{ mime = "{audio,video}/*", use = [ "play", "reveal" ] },
+	{ mime = "application/{json,ndjson,javascript,wine-extension-ini}", use = [ "edit", "reveal" ] },
+	{ mime = "inode/empty", use = [ "edit", "reveal" ] },
+	{ url = "*", use = [ "open", "reveal" ] },
+]

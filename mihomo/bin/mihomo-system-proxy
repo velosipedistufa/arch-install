@@ -2,7 +2,7 @@
 # Apply or clear GNOME/XDG system proxy settings for mihomo mixed-port.
 set -euo pipefail
 
-HOST="${MIHOMO_PROXY_HOST:-127.0.0.1}"
+HOST="${MIHOMO_PROXY_HOST:-::1}"
 PORT="${MIHOMO_PROXY_PORT:-7890}"
 
 usage() {
@@ -11,6 +11,53 @@ usage() {
 }
 
 [[ $# -ge 1 ]] || usage
+
+# LibreWolf/Firefox keep a manual SOCKS host in the profile. Point that at ::1
+# and pin it with user.js so the next browser start does not stick on 127.0.0.1.
+sync_browser_proxy() {
+	HOST="$HOST" PORT="$PORT" python3 - <<'PY'
+import os
+from pathlib import Path
+
+host = os.environ["HOST"]
+port = os.environ["PORT"]
+roots = [
+    Path.home() / ".config/librewolf",
+    Path.home() / ".mozilla/firefox",
+]
+marker = f"user_pref(\"network.proxy.socks_port\", {port});"
+block = f"""// mihomo mixed-port on IPv6 localhost. Managed by mihomo-system-proxy.
+user_pref("network.proxy.type", 1);
+user_pref("network.proxy.socks", "{host}");
+user_pref("network.proxy.socks_port", {port});
+user_pref("network.proxy.socks_version", 5);
+user_pref("network.proxy.socks_remote_dns", true);
+user_pref("network.proxy.http", "{host}");
+user_pref("network.proxy.http_port", {port});
+user_pref("network.proxy.ssl", "{host}");
+user_pref("network.proxy.ssl_port", {port});
+user_pref("network.proxy.share_proxy_settings", true);
+user_pref("network.proxy.no_proxies_on", "localhost");
+"""
+for root in roots:
+    if not root.is_dir():
+        continue
+    for prefs in root.rglob("prefs.js"):
+        try:
+            text = prefs.read_text(errors="ignore")
+        except OSError:
+            continue
+        if "network.proxy.socks" not in text and marker not in text:
+            continue
+        new = text.replace('user_pref("network.proxy.socks", "127.0.0.1");', f'user_pref("network.proxy.socks", "{host}");')
+        new = new.replace('user_pref("network.proxy.socks", "0.0.0.0");', f'user_pref("network.proxy.socks", "{host}");')
+        new = new.replace('user_pref("network.proxy.http", "127.0.0.1");', f'user_pref("network.proxy.http", "{host}");')
+        new = new.replace('user_pref("network.proxy.ssl", "127.0.0.1");', f'user_pref("network.proxy.ssl", "{host}");')
+        if new != text:
+            prefs.write_text(new)
+        (prefs.parent / "user.js").write_text(block)
+PY
+}
 
 case "$1" in
   on)
@@ -28,6 +75,7 @@ case "$1" in
     gsettings set org.gnome.system.proxy.ftp port "$PORT"
     gsettings set org.gnome.system.proxy ignore-hosts \
       "['localhost', '127.0.0.0/8', '::1', '192.168.0.0/16', '10.0.0.0/8', '172.16.0.0/12']"
+    sync_browser_proxy
     echo "System proxy ON → ${HOST}:${PORT} (mihomo mixed-port)"
     ;;
   off)

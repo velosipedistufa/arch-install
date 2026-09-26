@@ -68,7 +68,8 @@ tooltip label {
 #custom-vram,
 #custom-host6,
 #custom-bashirov,
-#custom-lan {
+#custom-lan,
+#custom-dnd {
     padding: 0 8px;
     margin: 3px 2px;
     color: @fg;
@@ -93,7 +94,8 @@ tooltip label {
 #custom-vram:hover,
 #custom-host6:hover,
 #custom-bashirov:hover,
-#custom-lan:hover {
+#custom-lan:hover,
+#custom-dnd:hover {
     border-color: @yel;
     box-shadow: inset 0 -1px 0 @yel;
 }
@@ -142,8 +144,21 @@ tooltip label {
     box-shadow: inset 3px 0 0 @cyan;
 }
 
-#wireplumber {
+#custom-dnd {
     margin-left: 8px;
+    box-shadow: inset 3px 0 0 @teal;
+}
+#custom-dnd.on {
+    color: @fg;
+}
+#custom-dnd.dnd {
+    color: #2a3142;
+    background: #07080c;
+    border-color: #141820;
+    box-shadow: inset 3px 0 0 #1c2433;
+}
+
+#wireplumber {
     box-shadow: inset 3px 0 0 @mag;
 }
 #wireplumber.muted {

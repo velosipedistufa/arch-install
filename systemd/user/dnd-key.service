@@ -1,0 +1,11 @@
+[Unit]
+Description=Do-not-disturb key (ZMK Super+Shift+N)
+After=mako.service
+
+[Service]
+ExecStart=%h/.config/waybar/scripts/dnd-key.py
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

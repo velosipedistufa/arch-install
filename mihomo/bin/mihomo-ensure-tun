@@ -5,7 +5,7 @@ set -euo pipefail
 CONFIG="${MIHOMO_CONFIG:-$HOME/.config/mihomo/config.yaml}"
 INET4="${MIHOMO_TUN_INET4:-198.18.0.1/30}"
 INET6="${MIHOMO_TUN_INET6:-fdfe:dcba:9876::1/126}"
-API="${MIHOMO_API:-http://127.0.0.1:9093}"
+API="${MIHOMO_API:-http://[::1]:9093}"
 G="${HOME}/.config/arch-install/globals.sh"
 [ -f "$G" ] || G="${HOME}/.config/setup_linux/globals.sh"
 # shellcheck disable=SC1090
@@ -203,11 +203,11 @@ PY
 
 if [[ "$APPLY" -eq 1 ]]; then
 	for _ in $(seq 1 40); do
-		curl -fsS --connect-timeout 0.3 --max-time 1 "${API}/version" >/dev/null 2>&1 && break
+		curl -gfsS --connect-timeout 0.3 --max-time 1 "${API}/version" >/dev/null 2>&1 && break
 		sleep 0.15
 	done
-	curl -fsS -X PATCH "${API}/configs?force=true" -H 'Content-Type: application/json' \
-		-d "{\"tun\":{\"enable\":true,\"stack\":\"mixed\",\"auto-route\":true,\"auto-detect-interface\":true,\"strict-route\":false,\"inet4-address\":[\"${INET4}\"],\"inet6-address\":[\"${INET6}\"],\"inet4-route-exclude-address\":[\"192.168.0.0/16\",\"10.0.0.0/8\",\"172.16.0.0/12\",\"127.0.0.0/8\"],\"inet6-route-exclude-address\":[\"fe80::/10\"],\"dns-hijack\":[\"any:53\",\"tcp://any:53\"]}}" \
+	curl -gfsS -X PATCH "${API}/configs?force=true" -H 'Content-Type: application/json' \
+		-d "{\"tun\":{\"enable\":true,\"stack\":\"mixed\",\"auto-route\":true,\"auto-detect-interface\":true,\"strict-route\":false,\"inet4-address\":[\"${INET4}\"],\"inet6-address\":[\"${INET6}\"],\"inet4-route-exclude-address\":[\"192.168.0.0/16\",\"10.0.0.0/8\",\"172.16.0.0/12\",\"127.0.0.0/8\"],\"inet6-route-exclude-address\":[\"::1/128\",\"fe80::/10\"],\"dns-hijack\":[\"any:53\",\"tcp://any:53\"]}}" \
 		>/dev/null 2>&1 || true
 	echo "mihomo-ensure-tun: applied TUN enable via API"
 fi

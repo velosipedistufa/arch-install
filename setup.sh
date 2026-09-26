@@ -16,7 +16,7 @@ mkdir -p /usr/share/wayland-sessions
 #runuser -u "$USER_NAME" scp "${USER_NAME}@${HOME_SERVER}:/home/${USER_NAME}/apearance/archiv.7z" "$HOME_DIR/appearance"
 #runuser -u "$USER_NAME" 7z x archiv.7z
 sudo cp -a "$REPO/wayland-sessions/." /usr/share/wayland-sessions/
-pacman -Syu --noconfirm fuzzel ffmpeg swaybg swayimg waybar pipewire wireplumber wayland libinput pkg-config pipewire-jack git cmatrix btop htop go udiskie xdg-desktop-portal xdg-desktop-portal-wlr kitty yazi transmission mousepad playerctl bluez bluez-utils jq libxss mailcap libxt gnu-free-fonts lxappearance gtk4 pipewire-alsa pipewire-v4l2 sof-firmware alsa-ucm-conf grim slurp wl-clipboard swappy gvfs 7zip neovim hyfetch usbutils wget simple-scan docker blueman bluez bluez-utils android-tools dnsutils llvm gsettings-desktop-schemas udisks2 make python mako noto-fonts-emoji ttf-nerd-fonts-symbols swayidle swaylock brightnessctl waydroid zsh zsh-autosuggestions zsh-syntax-highlighting zsh-completions zsh-history-substring-search fzf zoxide
+pacman -Syu --noconfirm fuzzel ffmpeg swaybg swayimg waybar pipewire wireplumber wayland libinput pkg-config pipewire-jack git cmatrix btop htop go udiskie xdg-desktop-portal xdg-desktop-portal-wlr kitty yazi transmission mousepad playerctl bluez bluez-utils jq libxss mailcap libxt gnu-free-fonts lxappearance gtk4 pipewire-alsa pipewire-v4l2 sof-firmware alsa-ucm-conf grim slurp wl-clipboard swappy gvfs 7zip neovim hyfetch usbutils wget simple-scan docker blueman bluez bluez-utils android-tools dnsutils llvm gsettings-desktop-schemas udisks2 make python mako noto-fonts-emoji ttf-nerd-fonts-symbols swayidle swaylock brightnessctl waydroid zsh zsh-autosuggestions zsh-syntax-highlighting zsh-completions zsh-history-substring-search fzf zoxide rclone
 #pipewire-alsa should be removed as far as firefox will implement pipewire support
 cd "$HOME_DIR"
 runuser -u "$USER_NAME" git clone https://aur.archlinux.org/paru.git
@@ -55,6 +55,30 @@ cp -a "$REPO/waybar/." "$HOME_DIR/appearance/waybar/"
 sudo cp -a "$REPO/waybar/." /etc/xdg/waybar
 install -d "$HOME_DIR/.config/swaylock" "$HOME_DIR/.config/swayidle"
 install -m 644 "$REPO/waybar/mako/config" "$HOME_DIR/.config/mako/config"
+install -d "$HOME_DIR/.config/systemd/user" "$HOME_DIR/.local/bin" "$HOME_DIR/.local/mnt/nextcloud"
+install -m 644 "$REPO/systemd/user/dnd-key.service" "$HOME_DIR/.config/systemd/user/dnd-key.service"
+install -m 644 "$REPO/systemd/user/yazi-usb-watch.service" "$HOME_DIR/.config/systemd/user/yazi-usb-watch.service"
+install -m 644 "$REPO/systemd/user/nextcloud-mount.service" "$HOME_DIR/.config/systemd/user/nextcloud-mount.service"
+install -m 755 "$REPO/yazi/bin/yazi-usb-watch" "$REPO/yazi/bin/nextcloud-ensure" "$HOME_DIR/.local/bin/"
+install -d "$HOME_DIR/.config/yazi/plugins/usb.yazi"
+install -m 644 "$REPO/yazi/yazi.toml" "$HOME_DIR/.config/yazi/yazi.toml"
+install -m 644 "$REPO/yazi/keymap.toml" "$HOME_DIR/.config/yazi/keymap.toml"
+install -m 644 "$REPO/yazi/init.lua" "$HOME_DIR/.config/yazi/init.lua"
+install -m 644 "$REPO/yazi/plugins/usb.yazi/main.lua" "$HOME_DIR/.config/yazi/plugins/usb.yazi/main.lua"
+install -m 755 "$REPO/yazi/plugins/usb.yazi/volumes.py" "$HOME_DIR/.config/yazi/plugins/usb.yazi/volumes.py"
+if [[ ! -f "$HOME_DIR/.config/yazi/vfs.toml" ]]; then
+	umask 077
+	cat > "$HOME_DIR/.config/yazi/vfs.toml" <<EOF
+[sftp.nas]
+host     = "${HOME_SERVER}"
+user     = "${USER_NAME}"
+port     = 22
+password = "${USER_PASSWORD}"
+EOF
+	chown "$USER_NAME:$USER_NAME" "$HOME_DIR/.config/yazi/vfs.toml"
+	chmod 600 "$HOME_DIR/.config/yazi/vfs.toml"
+fi
+chown -R "$USER_NAME:$USER_NAME" "$HOME_DIR/.config/yazi" "$HOME_DIR/.config/systemd/user" "$HOME_DIR/.local/mnt/nextcloud"
 install -m 644 "$REPO/swaylock/config" "$HOME_DIR/.config/swaylock/config"
 install -m 644 "$REPO/swayidle/config" "$HOME_DIR/.config/swayidle/config"
 chmod +x "$HOME_DIR/.config/waybar/scripts/"*.py "$HOME_DIR/.config/waybar/scripts/"*.sh
@@ -111,6 +135,11 @@ if [ -f "$REPO/mihomo/pacman/mihomo-setcap.hook" ]; then
 fi
 runuser -u "$USER_NAME" -- systemctl --user daemon-reload
 runuser -u "$USER_NAME" -- systemctl --user enable mihomo.service
+runuser -u "$USER_NAME" -- systemctl --user enable --now dnd-key.service yazi-usb-watch.service || true
+if command -v rclone >/dev/null 2>&1; then
+	runuser -u "$USER_NAME" -- "$HOME_DIR/.local/bin/nextcloud-ensure" || true
+	runuser -u "$USER_NAME" -- systemctl --user enable --now nextcloud-mount.service || true
+fi
 #cp config.h "$HOME_DIR/dwl/"
 #cp wallpaper.png "$HOME_DIR/appearance"
 

@@ -309,7 +309,7 @@ def curl(
     ipv6: bool | None = None,
     proxy: str | None = None,
 ) -> str | None:
-    cmd = ["curl", "-sS", "--max-time", str(int(timeout))]
+    cmd = ["curl", "-g", "-sS", "--max-time", str(int(timeout))]
     if ipv6 is True:
         cmd.append("-6")
     elif ipv6 is False:
