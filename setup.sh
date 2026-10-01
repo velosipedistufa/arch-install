@@ -102,6 +102,15 @@ EOF
 	udevadm control --reload
 fi
 
+# Backlight writes for whoever is in the video group. No device name:
+# every backlight node, and machines with none are unchanged.
+umask 022
+cat > /etc/udev/rules.d/90-backlight.rules <<'EOF'
+ACTION=="add", SUBSYSTEM=="backlight", RUN+="/usr/bin/chgrp video /sys/class/backlight/%k/brightness", RUN+="/usr/bin/chmod g+w /sys/class/backlight/%k/brightness"
+EOF
+udevadm control --reload || true
+usermod -aG video "$USER_NAME" || true
+
 cp "$REPO/start-dwl.sh" "$HOME_DIR/appearance/start-dwl.sh"
 chmod +x "$HOME_DIR/appearance/start-dwl.sh" "$REPO/start-dwl.sh"
 install -d "$HOME_DIR/.config/xdg-desktop-portal" "$HOME_DIR/.config/xdg-desktop-portal-wlr"
