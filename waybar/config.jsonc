@@ -23,7 +23,7 @@
     ],
     "modules-right": [
         "custom/dnd",
-        "custom/brightness",
+        "battery",
         "wireplumber",
         "custom/cpu",
         "temperature",
@@ -77,13 +77,17 @@
         "tooltip": true,
         "on-click": "$HOME/.config/waybar/scripts/dnd-toggle.sh toggle"
     },
-    "custom/brightness": {
-        "exec": "$HOME/.config/waybar/scripts/brightness.sh status",
-        "return-type": "json",
-        "exec-if": "sh -c 'ls /sys/class/backlight/*/brightness >/dev/null 2>&1'",
-        "interval": 2,
-        "signal": 8,
-        "tooltip": true,
+    "battery": {
+        "interval": 30,
+        "states": {
+            "warning": 30,
+            "critical": 15
+        },
+        "format": "󰃠 {capacity}% {icon}",
+        "format-charging": "󰃠 {capacity}% {icon}",
+        "format-plugged": "󰃠 {capacity}% {icon}",
+        "format-full": "󰃠 {capacity}% {icon}",
+        "tooltip-format": "{time}\nScroll to change brightness",
         "on-scroll-up": "$HOME/.config/waybar/scripts/brightness.sh up",
         "on-scroll-down": "$HOME/.config/waybar/scripts/brightness.sh down"
     },

@@ -13,6 +13,9 @@ SAVEHIST=50000
 
 export EDITOR=${EDITOR:-nvim}
 export VISUAL=${VISUAL:-${EDITOR}}
+# "nvim" contains "vi", so zsh would select the vi keymap. Ctrl+Left/Right
+# then leave insert mode and delete text. Emacs keymap keeps cursor movement.
+bindkey -e
 typeset -U path
 path=(${HOME}/.local/bin ${HOME}/.cargo/bin ${HOME}/.grok/bin $path)
 
@@ -39,6 +42,16 @@ bindkey '^[[A' history-substring-search-up
 bindkey '^[[B' history-substring-search-down
 [[ -n ${terminfo[kcuu1]} ]] && bindkey "${terminfo[kcuu1]}" history-substring-search-up
 [[ -n ${terminfo[kcud1]} ]] && bindkey "${terminfo[kcud1]}" history-substring-search-down
+
+# Ctrl+Left/Right move by word. Alt+Left/Right do the same.
+bindkey '^[[1;5D' backward-word
+bindkey '^[[1;5C' forward-word
+bindkey '^[[1;3D' backward-word
+bindkey '^[[1;3C' forward-word
+[[ -n ${terminfo[kLFT5]-} ]] && bindkey "${terminfo[kLFT5]}" backward-word
+[[ -n ${terminfo[kRIT5]-} ]] && bindkey "${terminfo[kRIT5]}" forward-word
+[[ -n ${terminfo[kLFT3]-} ]] && bindkey "${terminfo[kLFT3]}" backward-word
+[[ -n ${terminfo[kRIT3]-} ]] && bindkey "${terminfo[kRIT3]}" forward-word
 
 # syntax-highlighting must be last
 [[ -r /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] &&
