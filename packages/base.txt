@@ -1,0 +1,22 @@
+# Packages installed by install-base.sh before the first reboot.
+# One name per line. Enough for a console, the network, and colemak.
+base
+linux
+linux-firmware
+networkmanager
+wpa_supplicant
+iwd
+sudo
+zsh
+vim
+nano
+git
+grub
+efibootmgr
+os-prober
+dosfstools
+e2fsprogs
+kbd
+dhcpcd
+dialog
+which

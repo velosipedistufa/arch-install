@@ -6,8 +6,17 @@ CONFIG="${MIHOMO_CONFIG:-$HOME/.config/mihomo/config.yaml}"
 INET4="${MIHOMO_TUN_INET4:-198.18.0.1/30}"
 INET6="${MIHOMO_TUN_INET6:-fdfe:dcba:9876::1/126}"
 API="${MIHOMO_API:-http://[::1]:9093}"
-G="${HOME}/.config/arch-install/globals.sh"
-[ -f "$G" ] || G="${HOME}/.config/setup_linux/globals.sh"
+G=""
+if [ -n "${ARCH_INSTALL_SECRETS:-}" ] && [ -f "$ARCH_INSTALL_SECRETS" ]; then
+	G=$ARCH_INSTALL_SECRETS
+else
+	for G in \
+		"${HOME}/.config/arch-install/secrets.sh" \
+		"${HOME}/.config/arch-install/globals.sh"
+	do
+		[ -f "$G" ] && break
+	done
+fi
 # shellcheck disable=SC1090
 [ -f "$G" ] && . "$G" || true
 VPS="${VPS_HOST:-}"
@@ -159,7 +168,7 @@ if in_tun and not inserted:
     if extra:
         out.append(extra)
 
-# DIRECT: LAN + proxy-server host (from globals, not a node UUID)
+# DIRECT: LAN + proxy-server host (from secrets.sh, not a node UUID)
 wanted = [
     "IP-CIDR,127.0.0.0/8,DIRECT",
     "IP-CIDR,192.168.0.0/16,DIRECT",

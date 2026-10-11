@@ -2,9 +2,20 @@
 # Region screenshot: grim + slurp → clipboard, local dir, Nextcloud WebDAV (domain, not LAN IP).
 set -eu
 
-G="${HOME}/.config/arch-install/globals.sh"
-[ -f "$G" ] || G="${HOME}/.config/setup_linux/globals.sh"
-[ -f "$G" ] && . "$G"
+# shellcheck disable=SC1090
+if [ -n "${ARCH_INSTALL_SECRETS:-}" ] && [ -f "$ARCH_INSTALL_SECRETS" ]; then
+	. "$ARCH_INSTALL_SECRETS"
+else
+	for G in \
+		"${HOME}/.config/arch-install/secrets.sh" \
+		"${HOME}/.config/arch-install/globals.sh"
+	do
+		if [ -f "$G" ]; then
+			. "$G"
+			break
+		fi
+	done
+fi
 
 LOCAL_DIR="${SCREENSHOT_LOCAL_DIR:-/tmp/screenshots}"
 mkdir -p "$LOCAL_DIR"
@@ -20,7 +31,7 @@ notify() {
 }
 
 if [ -z "${SCREENSHOT_DAV_URL:-}" ] || [ -z "${SCREENSHOT_DAV_USER:-}" ]; then
-	notify "Screenshot" "saved $file (no WebDAV in globals.sh)"
+	notify "Screenshot" "saved $file (no WebDAV in secrets.sh)"
 	exit 0
 fi
 

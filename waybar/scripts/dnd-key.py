@@ -14,6 +14,8 @@ import struct
 import subprocess
 from pathlib import Path
 
+from lib import secret_paths
+
 # struct input_event on 64-bit: timeval (16) + type, code, value
 EVENT = struct.Struct("llHHi")
 EV_KEY = 0x01
@@ -30,10 +32,7 @@ TOGGLE = str(Path(__file__).with_name("dnd-toggle.sh"))
 def keyboard() -> str:
     uniq = ""
     explicit = ""
-    for path in (
-        Path.home() / ".config/arch-install/globals.sh",
-        Path("/home/alex/GitRepos/arch-install/globals.sh"),
-    ):
+    for path in secret_paths():
         if not path.is_file():
             continue
         for line in path.read_text().splitlines():

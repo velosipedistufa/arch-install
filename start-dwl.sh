@@ -1,4 +1,6 @@
 #!/bin/sh
+# dwl session. This file lives in the git checkout. ly starts it through
+# /usr/local/bin/start-dwl -> ~/.local/bin/start-dwl.
 export XDG_SESSION_TYPE=wayland
 # :wlroots so xdg-desktop-portal-wlr matches UseIn= (needed for Firefox screen share)
 export XDG_CURRENT_DESKTOP=dwl:wlroots
@@ -16,9 +18,22 @@ export SDL_VIDEODRIVER=wayland
 export ELECTRON_OZONE_PLATFORM_HINT=wayland
 export _JAVA_AWT_WM_NONREPARENTING=1
 
-G="${HOME}/.config/arch-install/globals.sh"
-[ -f "$G" ] || G="${HOME}/.config/setup_linux/globals.sh"
-[ -f "$G" ] && . "$G"
+SCRIPT=$(readlink -f "$0" 2>/dev/null || printf '%s' "$0")
+REPO=$(CDPATH= cd -- "$(dirname -- "$SCRIPT")" && pwd)
+
+SECRETS=${ARCH_INSTALL_SECRETS:-}
+if [ -z "$SECRETS" ] || [ ! -f "$SECRETS" ]; then
+	for SECRETS in \
+		"${HOME}/.config/arch-install/secrets.sh" \
+		"${HOME}/.config/arch-install/globals.sh" \
+		"${REPO}/secrets.sh" \
+		"${REPO}/globals.sh"
+	do
+		[ -f "$SECRETS" ] && break
+	done
+fi
+# shellcheck disable=SC1090
+[ -f "$SECRETS" ] && . "$SECRETS"
 
 LOG="${HOME}/.cache/dwl-start.log"
 mkdir -p "${HOME}/.cache"
@@ -32,8 +47,11 @@ if ! pgrep -x dwl >/dev/null 2>&1; then
 	log "cleared stale compositor sockets"
 fi
 
-DW="${HOME}/appearance/dwl/dwl"
-[ -x "$DW" ] || DW=dwl
+if [ -x "${HOME}/.local/bin/dwl" ]; then
+	DW="${HOME}/.local/bin/dwl"
+else
+	DW=dwl
+fi
 "$DW" >/dev/null 2>>"$LOG" &
 DWL_PID=$!
 log "dwl pid $DWL_PID"
@@ -43,7 +61,6 @@ ok=0
 i=0
 while [ "$i" -lt 80 ]; do
 	if [ -S "$SOCK" ] && kill -0 "$DWL_PID" 2>/dev/null; then
-		# socket must belong to this dwl, not a leftover
 		ok=1
 		break
 	fi
@@ -74,14 +91,14 @@ sleep 0.15
 
 pgrep -x mako >/dev/null 2>&1 || mako >>"$LOG" 2>&1 &
 if [ -n "${KEYBOARD_EVENT:-}" ] && [ -r "${KEYBOARD_EVENT}" ]; then
-	pgrep -x layout-watch >/dev/null 2>&1 || "$HOME/.config/waybar/scripts/layout-watch" "$KEYBOARD_EVENT" >>"$LOG" 2>&1 &
+	pgrep -x layout-watch >/dev/null 2>&1 || "${HOME}/.local/bin/layout-watch" "$KEYBOARD_EVENT" >>"$LOG" 2>&1 &
 fi
 
 # waybar/swaybg can lose the race; retry a few times
 n=0
 while [ "$n" -lt 6 ]; do
 	pgrep -x waybar >/dev/null 2>&1 || waybar >>"$LOG" 2>&1 &
-	pgrep -x swaybg >/dev/null 2>&1 || swaybg -i "$HOME/appearance/wallpaper.png" -m fit -o* >>"$LOG" 2>&1 &
+	pgrep -x swaybg >/dev/null 2>&1 || swaybg -i "$REPO/wallpaper.png" -m fit -o'*' >>"$LOG" 2>&1 &
 	sleep 0.35
 	if pgrep -x waybar >/dev/null 2>&1 && pgrep -x swaybg >/dev/null 2>&1; then
 		log "waybar+swaybg up"

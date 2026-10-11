@@ -1,0 +1,5 @@
+#!/bin/sh
+# ly starts this from the system session file. The session script itself
+# stays in the git checkout and is linked from ~/.local/bin/start-dwl.
+set -eu
+exec "${HOME}/.local/bin/start-dwl"

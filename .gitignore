@@ -1,24 +1,30 @@
-# Site-specific secrets and machine paths — copy globals.example.sh
+# Local secrets. Copy secrets.example.sh to secrets.sh and edit that.
+# globals.sh is the previous filename; still never commit it.
+secrets.sh
 globals.sh
 
-# Session / local junk, never publish
+# Images, caches, and other generated data. Keep them out of the tree.
+VM/
+*.iso
+*.qcow2
+*.raw
+*.log
 forGrok.md
 PLAN_WAYBAR.md
 handoff.md
-*.log
 wev.txt
 __pycache__/
 *.pyc
 
-# Built helpers
+# Binaries, if a helper is ever compiled inside the checkout.
 waybar/scripts/kbgroup
 waybar/scripts/layout-watch
 waybar/scripts/*.o
 waybar/hw.json
 
-# Generated / machine-specific udev (uniq + username)
+# Generated udev rules (keyboard serial and username).
 udev/99-layout-watch.rules
 udev/99-zmk-layout-watch.rules
 
-# TUI session state (regenerated)
+# TUI session state, rewritten by mihomo-tui.
 mihomo/mihomo-tui/config.runtime.yaml

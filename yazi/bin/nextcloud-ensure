@@ -3,12 +3,24 @@
 # Password stays in ~/.config/rclone/rclone.conf (mode 600), never in git.
 set -euo pipefail
 
-G="${HOME}/.config/arch-install/globals.sh"
-if [[ ! -f "$G" ]]; then
-	G="${HOME}/GitRepos/arch-install/globals.sh"
+G=""
+if [[ -n ${ARCH_INSTALL_SECRETS:-} && -f ${ARCH_INSTALL_SECRETS} ]]; then
+	G=$ARCH_INSTALL_SECRETS
+else
+	for candidate in \
+		"${HOME}/.config/arch-install/secrets.sh" \
+		"${HOME}/.config/arch-install/globals.sh" \
+		"${HOME}/GitRepos/arch-install/secrets.sh" \
+		"${HOME}/GitRepos/arch-install/globals.sh"
+	do
+		if [[ -f $candidate ]]; then
+			G=$candidate
+			break
+		fi
+	done
 fi
-if [[ ! -f "$G" ]]; then
-	echo "nextcloud-ensure: globals.sh not found" >&2
+if [[ -z $G ]]; then
+	echo "nextcloud-ensure: secrets.sh not found" >&2
 	exit 1
 fi
 # shellcheck disable=SC1090

@@ -1,0 +1,8 @@
+# AUR packages built by paru during install-desktop.sh.
+# wlroots0.19 matches dwl v0.8 (see dwl/UPSTREAM).
+wlroots0.19
+flat-remix
+flat-remix-gtk
+stig
+mihomo
+mihomo-tui-git

@@ -36,20 +36,32 @@ SKIP_IFACE_PREFIXES = (
 )
 
 
-def _global_paths() -> list[Path]:
+def secret_paths() -> list[Path]:
+    """Where to read secrets.sh. First existing file wins.
+
+    ~/.config/arch-install/secrets.sh is the installed copy.
+    The repo file is the one you edit before install-base.sh.
+    globals.sh is the previous filename and is used only if secrets.sh is absent.
+    """
     paths: list[Path] = []
-    env = os.environ.get("ARCH_INSTALL_GLOBALS") or os.environ.get("SETUP_LINUX_GLOBALS")
+    env = os.environ.get("ARCH_INSTALL_SECRETS")
     if env:
         paths.append(Path(env))
-    paths.append(Path.home() / ".config" / "arch-install" / "globals.sh")
-    paths.append(Path.home() / ".config" / "setup_linux" / "globals.sh")
-    # waybar/scripts/lib.py -> repo root
-    paths.append(Path(__file__).resolve().parents[2] / "globals.sh")
+    home = Path.home()
+    paths.append(home / ".config" / "arch-install" / "secrets.sh")
+    paths.append(home / ".config" / "arch-install" / "globals.sh")
+    root = Path(__file__).resolve().parents[2]
+    paths.append(root / "secrets.sh")
+    paths.append(root / "globals.sh")
     return paths
 
 
+def _global_paths() -> list[Path]:
+    return secret_paths()
+
+
 def load_globals() -> dict[str, str]:
-    """Parse KEY=value from globals.sh. First existing path wins."""
+    """Parse KEY=value from secrets.sh. First existing path wins."""
     global _GLOBALS
     if _GLOBALS is not None:
         return _GLOBALS

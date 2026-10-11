@@ -18,7 +18,7 @@ def lamp(ok: bool, label: str) -> str:
 def main() -> None:
     name = g("VPS_HOST")
     if not name:
-        emit("--", "VPS_HOST unset in globals.sh", "down")
+        emit("--", "VPS_HOST unset in secrets.sh", "down")
         return
     expect_a = g("VPS_A")
     expect_aaaa = g("VPS_AAAA")

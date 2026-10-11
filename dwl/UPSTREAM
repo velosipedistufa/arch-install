@@ -1,0 +1,3 @@
+# dwl tag v0.8 (wlroots 0.19). config.h and patches/dwl-layout-file.patch match this commit.
+# install-desktop.sh checks out this revision. Move the pin and the patch together.
+9b11a49cb757b80f8589088b487b5f1e56643aa1
