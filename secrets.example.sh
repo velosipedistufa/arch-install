@@ -48,6 +48,16 @@ KEYBOARD_UNIQ=
 # RAM type (DDR3/4/5) and VRAM type are not set here.
 # They are probed from the machine and cached under ~/.cache/waybar.
 
+# Work VPN (Cisco AnyConnect). OpenConnect keeps a tun named ocsk.
+# Mihomo selects it as the "skoltech" node. Empty user or password skips the service.
+# The password stays in this file. Do not copy it into mihomo/config.yaml.
+# Leave SKOLTECH_VPN_SERVERCERT empty to pin whatever leaf the gateway presents
+# (the chain does not verify). Set pin-sha256:... to pin one certificate.
+SKOLTECH_VPN_SERVER=vpn.skoltech.ru
+SKOLTECH_VPN_USER=
+SKOLTECH_VPN_PASSWORD=
+SKOLTECH_VPN_SERVERCERT=
+
 # Screenshots: grim+slurp region, then clipboard, a local dir, and WebDAV.
 # Use a public hostname, not a LAN address, so a laptop off-LAN can upload.
 SCREENSHOT_LOCAL_DIR=/tmp/screenshots

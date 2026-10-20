@@ -3,6 +3,16 @@
 Program-level settings for **mihomo** (core) and **mihomo-tui** (dashboard).  
 **Proxy/VLESS profiles are not included** — add those under `proxies:` in your live `~/.config/mihomo/config.yaml`.
 
+The `skoltech` node is the work AnyConnect VPN. `skoltech-vpn.service` runs OpenConnect on `ocsk` and does not take the default route. Selecting `skoltech` in the `PROXY` group binds outbound traffic to that interface. The username and password live in `secrets.sh` only.
+
+On a machine that is already installed:
+
+```sh
+sudo ./mihomo/bin/skoltech-install
+```
+
+`install-desktop.sh` runs that when `SKOLTECH_VPN_USER` and `SKOLTECH_VPN_PASSWORD` are set.
+
 ## Layout
 
 | Path | Purpose |

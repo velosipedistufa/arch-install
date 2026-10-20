@@ -22,6 +22,7 @@ fi
 VPS="${VPS_HOST:-}"
 VPS_A_LIT="${VPS_A:-}"
 VPS_AAAA_LIT="${VPS_AAAA:-}"
+SKOLTECH_SERVER="${SKOLTECH_VPN_SERVER:-}"
 
 APPLY=0
 CLEANUP=0
@@ -57,12 +58,13 @@ if [[ ! -f "$CONFIG" ]]; then
 	exit 0
 fi
 
-python3 - "$CONFIG" "$INET4" "$INET6" "$VPS" "$VPS_A_LIT" "$VPS_AAAA_LIT" <<'PY'
+python3 - "$CONFIG" "$INET4" "$INET6" "$VPS" "$VPS_A_LIT" "$VPS_AAAA_LIT" "$SKOLTECH_SERVER" <<'PY'
 import sys
 from pathlib import Path
 
 path = Path(sys.argv[1])
 inet4, inet6, vps, vps_a, vps_aaaa = sys.argv[2:7]
+skoltech = sys.argv[7] if len(sys.argv) > 7 else ""
 text = path.read_text()
 lines = text.splitlines(True)
 out = []
@@ -181,6 +183,8 @@ if vps_a:
     wanted.append(f"IP-CIDR,{vps_a}/32,DIRECT")
 if vps_aaaa:
     wanted.append(f"IP-CIDR6,{vps_aaaa}/128,DIRECT")
+if skoltech:
+    wanted.append(f"DOMAIN-SUFFIX,{skoltech},DIRECT")
 
 body = "".join(out)
 existing = {line.strip().lstrip("- ").strip() for line in body.splitlines()}
@@ -216,7 +220,7 @@ if [[ "$APPLY" -eq 1 ]]; then
 		sleep 0.15
 	done
 	curl -gfsS -X PATCH "${API}/configs?force=true" -H 'Content-Type: application/json' \
-		-d "{\"tun\":{\"enable\":true,\"stack\":\"mixed\",\"auto-route\":true,\"auto-detect-interface\":true,\"strict-route\":false,\"inet4-address\":[\"${INET4}\"],\"inet6-address\":[\"${INET6}\"],\"inet4-route-exclude-address\":[\"192.168.0.0/16\",\"10.0.0.0/8\",\"172.16.0.0/12\",\"127.0.0.0/8\"],\"inet6-route-exclude-address\":[\"::1/128\",\"fe80::/10\"],\"dns-hijack\":[\"any:53\",\"tcp://any:53\"]}}" \
+		-d "{\"tun\":{\"enable\":true,\"stack\":\"mixed\",\"auto-route\":true,\"auto-detect-interface\":true,\"strict-route\":false,\"inet4-address\":[\"${INET4}\"],\"inet6-address\":[\"${INET6}\"],\"inet4-route-exclude-address\":[\"192.168.0.0/16\",\"10.0.0.0/8\",\"172.16.0.0/12\",\"127.0.0.0/8\"],\"inet6-route-exclude-address\":[\"::1/128\",\"fe80::/10\"],\"dns-hijack\":[\"any:53\",\"tcp://any:53\"],\"exclude-interface\":[\"ocsk\"]}}" \
 		>/dev/null 2>&1 || true
 	echo "mihomo-ensure-tun: applied TUN enable via API"
 fi

@@ -201,6 +201,7 @@ link_path "$REPO/systemd/user/nextcloud-mount.service" "${HOME_DIR}/.config/syst
 link_path "$REPO/mihomo/systemd/mihomo.service" "${HOME_DIR}/.config/systemd/user/mihomo.service"
 link_path "$REPO/mihomo/systemd/system-proxy.conf" "${HOME_DIR}/.config/systemd/user/mihomo.service.d/system-proxy.conf"
 link_path "$REPO/mihomo/systemd/tun-ipv6.conf" "${HOME_DIR}/.config/systemd/user/mihomo.service.d/tun-ipv6.conf"
+link_path "$REPO/mihomo/systemd/skoltech-dns-fwd.service" "${HOME_DIR}/.config/systemd/user/skoltech-dns-fwd.service"
 link_path "$REPO/mihomo/desktop/mihomo-tui.desktop" "${HOME_DIR}/.local/share/applications/mihomo-tui.desktop"
 for bin in "$REPO/mihomo/bin/"*; do
 	link_path "$bin" "${HOME_DIR}/.local/bin/$(basename "$bin")"
@@ -264,6 +265,13 @@ if [[ -x /usr/bin/mihomo ]]; then
 	setcap 'cap_net_admin,cap_net_raw,cap_net_bind_service=+ep' /usr/bin/mihomo || log "setcap on mihomo failed; TUN may stay off until the pacman hook runs."
 fi
 
+# Work VPN unit. The password stays in secrets.sh. Skip when those fields are empty.
+if [[ -n ${SKOLTECH_VPN_USER:-} && -n ${SKOLTECH_VPN_PASSWORD:-} && -n ${SKOLTECH_VPN_SERVER:-} ]]; then
+	"$REPO/mihomo/bin/skoltech-install" || log "skoltech VPN did not start."
+else
+	systemctl disable --now skoltech-vpn.service 2>/dev/null || true
+fi
+
 as_user dbus-run-session gsettings set org.gnome.desktop.interface gtk-theme 'Flat-Remix-GTK-Red-Darkest' \
 	|| log "GTK theme was not applied."
 as_user dbus-run-session gsettings set org.gnome.desktop.interface icon-theme 'Flat-Remix-Red-Dark' \
@@ -284,7 +292,7 @@ for _ in $(seq 1 25); do
 done
 [[ -S /run/user/${uid}/bus ]] || die "User bus for ${USER_NAME} did not start."
 as_user systemctl --user daemon-reload
-as_user systemctl --user enable pipewire.service wireplumber.service mihomo.service
+as_user systemctl --user enable pipewire.service wireplumber.service mihomo.service skoltech-dns-fwd.service
 as_user systemctl --user enable yazi-usb-watch.service
 if [[ -n ${KEYBOARD_UNIQ:-} || -n ${KEYBOARD_EVENT:-} ]]; then
 	as_user systemctl --user enable dnd-key.service

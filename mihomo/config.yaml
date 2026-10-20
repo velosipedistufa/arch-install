@@ -33,6 +33,9 @@ tun:
   inet6-route-exclude-address:
     - "::1/128"
     - fe80::/10
+  # OpenConnect tun. Traffic bound to it must not be captured again.
+  exclude-interface:
+    - ocsk
   dns-hijack:
     - any:53
     - tcp://any:53
@@ -54,6 +57,10 @@ dns:
     - 149.112.112.112
     - 2620:fe::fe
     - 2620:fe::9
+  # skoltech-dns-fwd. VPN resolvers first, Quad9 if the tunnel is down.
+  nameserver-policy:
+    "+.skoltech.ru":
+      - "127.0.0.1:53535"
 
 sniffer:
   enable: true
@@ -66,14 +73,19 @@ sniffer:
     QUIC:
       ports: [443]
 
-# Placeholder — replace with your nodes locally (not stored in this repo template).
-proxies: []
+# Placeholder nodes are added locally. skoltech is the work VPN tun, not an account.
+proxies:
+  - name: skoltech
+    type: direct
+    interface-name: ocsk
+    ip-version: ipv4
 
 proxy-groups:
   - name: PROXY
     type: select
     proxies:
       - DIRECT
+      - skoltech
 
 rules:
   - IP-CIDR,127.0.0.0/8,DIRECT
@@ -81,4 +93,6 @@ rules:
   - IP-CIDR,192.168.0.0/16,DIRECT
   - IP-CIDR,10.0.0.0/8,DIRECT
   - IP-CIDR,172.16.0.0/12,DIRECT
+  # The AnyConnect session itself must not enter the tunnel.
+  - DOMAIN-SUFFIX,vpn.skoltech.ru,DIRECT
   - MATCH,PROXY

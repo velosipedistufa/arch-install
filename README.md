@@ -96,4 +96,4 @@ The test is not part of a normal install. `tools/guest-phase1.sh` and `tools/gue
 
 ly on tty2 starts `/usr/local/bin/start-dwl`, which runs `start-dwl.sh`. That starts dwl, the portals (including xdg-desktop-portal-wlr for Firefox screen share), mako, waybar, swaybg, and swayidle. The wallpaper is `wallpaper.png` in this checkout.
 
-Mihomo's program config is under `mihomo/`. Proxy profiles are not in git. See [`mihomo/README.md`](mihomo/README.md).
+Mihomo's program config is under `mihomo/`. Proxy profiles are not in git. The work VPN is the `skoltech` node; its password stays in `secrets.sh`. See [`mihomo/README.md`](mihomo/README.md).
