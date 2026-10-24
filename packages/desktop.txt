@@ -43,6 +43,8 @@ libxss
 mailcap
 libxt
 gnu-free-fonts
+ttf-0xproto-nerd
+ttf-iosevka-nerd
 lxappearance
 gtk4
 sof-firmware

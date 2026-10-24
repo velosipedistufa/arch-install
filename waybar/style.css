@@ -12,7 +12,7 @@
 @define-color crit      #ff2a4a;
 
 * {
-    font-family: "AtkynsonMono Nerd Font", "Symbols Nerd Font", "Noto Color Emoji", FreeSans, sans-serif;
+    font-family: "0xProto Nerd Font", "Symbols Nerd Font", "Iosevka Nerd Font Mono", "Noto Color Emoji", sans-serif;
     font-size: 12px;
     min-height: 0;
 }

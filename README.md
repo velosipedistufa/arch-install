@@ -32,6 +32,8 @@ The console keymap on that boot is colemak (`KEYMAP=colemak` in `/etc/vconsole.c
 
 `install-desktop.sh` installs packages, builds paru from source (the prebuilt `paru-bin` package does not match the current libalpm), builds dwl v0.8 against wlroots 0.19, enables ly on tty2, and links the session into the standard paths. ly is not started for you. Reboot, or switch to tty2, and pick dwl.
 
+The desktop font is 0xProto Nerd Font (`ttf-0xproto-nerd`). `fontconfig/local.conf` is installed as `/etc/fonts/local.conf`, so `sans`, `serif`, and `monospace` resolve to it. GTK, kitty, fuzzel, waybar, mako, and swaylock use the same face. Cyrillic falls back to Iosevka Nerd Font Mono from `ttf-iosevka-nerd`. That fallback is limited to Cyrillic, so icons and other missing glyphs stay on 0xProto or Symbols Nerd Font. Noto Color Emoji remains the emoji font. KiCad is left on KiCad Font.
+
 ## Secrets
 
 `secrets.sh` is the only local config file. It holds the username, password, hostname, disk, addresses, and keyboard id. It is gitignored.

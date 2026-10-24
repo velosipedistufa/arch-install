@@ -272,10 +272,66 @@ else
 	systemctl disable --now skoltech-vpn.service 2>/dev/null || true
 fi
 
+log "Setting 0xProto Nerd Font as the desktop default"
+# ttf-iosevka-nerd is already installed with the desktop packages. It is the
+# Cyrillic fallback; 0xProto has no Cyrillic. Drop a leftover hand copy so it
+# does not shadow the package.
+rm -rf /usr/local/share/fonts/iosevka-nerd
+install -d /etc/fonts/conf.d
+install -m 644 "$REPO/fontconfig/local.conf" /etc/fonts/local.conf
+ln -sfn /etc/fonts/local.conf /etc/fonts/conf.d/00-arch-install-0xproto.conf
+fc-cache -f || log "fontconfig cache refresh failed."
+fc-list "Iosevka Nerd Font Mono" file | grep -q . \
+	|| die "Iosevka Nerd Font Mono is not visible to fontconfig."
+
 as_user dbus-run-session gsettings set org.gnome.desktop.interface gtk-theme 'Flat-Remix-GTK-Red-Darkest' \
 	|| log "GTK theme was not applied."
 as_user dbus-run-session gsettings set org.gnome.desktop.interface icon-theme 'Flat-Remix-Red-Dark' \
 	|| log "Icon theme was not applied."
+as_user dbus-run-session gsettings set org.gnome.desktop.interface font-name '0xProto Nerd Font 11' \
+	|| log "Interface font was not applied."
+as_user dbus-run-session gsettings set org.gnome.desktop.interface document-font-name '0xProto Nerd Font 11' \
+	|| log "Document font was not applied."
+as_user dbus-run-session gsettings set org.gnome.desktop.interface monospace-font-name '0xProto Nerd Font 11' \
+	|| log "Monospace font was not applied."
+
+install -d -o "$USER_NAME" -g "$USER_NAME" "${HOME_DIR}/.config/gtk-3.0" "${HOME_DIR}/.config/gtk-4.0" \
+	"${HOME_DIR}/.config/kitty" "${HOME_DIR}/.config/fuzzel"
+gtk_ini="${HOME_DIR}/.config/gtk-3.0/settings.ini"
+if [[ ! -f $gtk_ini ]]; then
+	printf '%s\n' '[Settings]' >"$gtk_ini"
+fi
+if grep -q '^gtk-font-name=' "$gtk_ini"; then
+	sed -i 's/^gtk-font-name=.*/gtk-font-name=0xProto Nerd Font 11/' "$gtk_ini"
+else
+	printf '%s\n' 'gtk-font-name=0xProto Nerd Font 11' >>"$gtk_ini"
+fi
+chown "$USER_NAME:$USER_NAME" "$gtk_ini"
+# gtk-4.0 is mode 700. The settings file itself stays world-readable.
+install -m 644 -o "$USER_NAME" -g "$USER_NAME" /dev/stdin "${HOME_DIR}/.config/gtk-4.0/settings.ini" <<'EOF'
+[Settings]
+gtk-font-name=0xProto Nerd Font 11
+EOF
+
+# Keep any other kitty or fuzzel options. A second run replaces these lines.
+set_conf_line() {
+	local file=$1 key=$2 value=$3
+	touch "$file"
+	if grep -q "^${key}" "$file"; then
+		sed -i "s|^${key}.*|${key}${value}|" "$file"
+	else
+		printf '%s%s\n' "$key" "$value" >>"$file"
+	fi
+	chown "$USER_NAME:$USER_NAME" "$file"
+}
+set_conf_line "${HOME_DIR}/.config/kitty/kitty.conf" 'font_family ' '0xProto Nerd Font'
+set_conf_line "${HOME_DIR}/.config/kitty/kitty.conf" 'font_size ' '11.0'
+set_conf_line "${HOME_DIR}/.config/fuzzel/fuzzel.ini" 'font=' '0xProto Nerd Font:size=11'
+
+swayimg_lua="${HOME_DIR}/.config/swayimg/init.lua"
+if [[ -f $swayimg_lua ]] && grep -q 'swayimg.text.font' "$swayimg_lua"; then
+	sed -i 's/swayimg\.text\.font = ".*"/swayimg.text.font = "0xProto Nerd Font"/' "$swayimg_lua"
+fi
 
 systemctl enable ly@tty2.service
 systemctl disable getty@tty2.service || true

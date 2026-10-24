@@ -15,7 +15,7 @@ text-clear-color=e8ecf4ff
 text-ver-color=e8ecf4ff
 text-wrong-color=ff2a4aff
 separator-color=00000000
-font=AtkynsonMono Nerd Font
+font=0xProto Nerd Font
 daemonize
 ignore-empty-password
 show-failed-attempts
