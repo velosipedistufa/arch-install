@@ -85,4 +85,6 @@ zoxide
 rclone
 tmux
 cava
+cups
+cups-filters
 rbw #warden client
