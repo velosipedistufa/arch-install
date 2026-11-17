@@ -88,3 +88,4 @@ cava
 cups
 cups-filters
 rbw #warden client
+wf-recorder
